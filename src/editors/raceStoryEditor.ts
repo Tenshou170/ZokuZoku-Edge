@@ -9,7 +9,7 @@ import path from 'path';
 import { HCA_KEY, ZOKUZOKU_DIR } from '../defines';
 import { ACB } from "cricodecs";
 import fs from 'fs/promises';
-import { pathExists } from '../core/utils';
+import { pathExists, invalidateStatusCache } from '../core/utils';
 import { extractRaceStoryData } from '../pythonBridge';
 import config from '../config';
 import SQLite from '../sqlite';
@@ -24,7 +24,6 @@ export class RaceStoryEditorProvider extends EditorBase implements vscode.Custom
     }
 
     resolveCustomTextEditor(document: vscode.TextDocument, webviewPanel: vscode.WebviewPanel, _token: vscode.CancellationToken) {
-        // Json document setup
         const json = new JsonDocument<string[] | null>(document.uri, null, () => {
             const subscribedKey = this.subscribedPath[0];
             const content = getDictValue(subscribedKey);
@@ -54,14 +53,12 @@ export class RaceStoryEditorProvider extends EditorBase implements vscode.Custom
                 valueNode.value;
         }
 
-        // Init webview
         const assetInfo = RaceStoryEditorProvider.parseFilename(document.uri);
         const panelDisposables = this.setupWebview(webviewPanel, [
             vscode.Uri.file(assetInfo.voiceCacheDir)
         ]);
         panelDisposables.push(json);
 
-        // Messaging setup
         function postMessage(message: ControllerMessage) {
             webviewPanel.webview.postMessage(message);
         }
@@ -73,7 +70,6 @@ export class RaceStoryEditorProvider extends EditorBase implements vscode.Custom
             switch (message.type) {
                 case "init":
                     postMessage({ type: "setExplorerTitle", title: vscode.l10n.t("Race Story") });
-                    // Just making sure to prevent data races
                     initReadPromise.finally(() => {
                         nodesPromise.then(nodes => {
                             postMessage({ type: "setNodes", nodes });
@@ -109,7 +105,6 @@ export class RaceStoryEditorProvider extends EditorBase implements vscode.Custom
                     const key = Number(message.entryPath[0]);
                     if (isNaN(key)) { break; }
 
-                    // Wait for previous edit to finish before applying another
                     prevEditPromise = prevEditPromise.then(async () => {
                         try {
                             if (json.ast.type !== "Array") {
@@ -163,8 +158,37 @@ export class RaceStoryEditorProvider extends EditorBase implements vscode.Custom
             }
         }));
 
-        // Always try to clean up voice cache, regardless if voice was loaded in *this session*
-        panelDisposables.push(new vscode.Disposable(() => {
+        panelDisposables.push(new vscode.Disposable(async () => {
+            try {
+                // Check if file still exists
+                try {
+                    await vscode.workspace.fs.stat(document.uri);
+                } catch {
+                    return;
+                }
+
+                const text = document.getText();
+                let shouldDelete = false;
+
+                if (!text.trim()) {
+                    shouldDelete = true;
+                } else {
+                    try {
+                        const data = JSON.parse(text);
+                        if (data && typeof data === 'object' && Object.keys(data).length === 0) {
+                            shouldDelete = true;
+                        }
+                    } catch {}
+                }
+
+                if (shouldDelete) {
+                    await vscode.workspace.fs.delete(document.uri);
+                    invalidateStatusCache(document.uri);
+                }
+            } catch (e) {
+                console.warn(`Failed to cleanup ghost file ${document.uri}: ${e}`);
+            }
+
             return fs.rm(assetInfo.voiceCacheDir, { recursive: true, force: true });
         }));
     }

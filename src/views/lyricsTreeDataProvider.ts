@@ -10,7 +10,7 @@ export default class LyricsTreeDataProvider extends RefreshableTreeDataProviderB
     private static _instance?: LyricsTreeDataProvider;
     static get instance(): LyricsTreeDataProvider | undefined { return this._instance; }
 
-    static register(context: vscode.ExtensionContext): vscode.Disposable {
+    static register(_context: vscode.ExtensionContext): vscode.Disposable {
         const treeDataProvider = new LyricsTreeDataProvider;
         LyricsTreeDataProvider._instance = treeDataProvider;
 
@@ -42,7 +42,7 @@ export default class LyricsTreeDataProvider extends RefreshableTreeDataProviderB
         const sqlite = SQLite.instance;
         const queryRes = await sqlite.queryMeta(LYRICS_PATH_QUERY);
 
-        // Try to get all of the song names (tl;dr single query faster than multiple queries, process spawning bla bla)
+        // Batch get song names
         const songNames = await utils.getTextDataCategory(16);
         const ldManager = LocalizedDataManager.instance!;
 
@@ -53,7 +53,6 @@ export default class LyricsTreeDataProvider extends RefreshableTreeDataProviderB
             const dictPath = await ldManager.getPathUri("assets_dir", undefined, "lyrics", `m${index}_lyrics.json`);
             const status = await utils.getEntryStatus(dictPath);
 
-            // Try to get the name of the song, otherwise use the index as the label
             const label = utils.makeStatusLabel(songNames[+index] ?? index, status);
 
             items.push({

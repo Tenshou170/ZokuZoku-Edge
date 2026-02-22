@@ -15,7 +15,8 @@ export default class RefreshableTreeDataProviderBase {
         let watcher:  vscode.FileSystemWatcher | null = null;
         treeView.onDidChangeVisibility(async e => {
             if (e.visible) {
-                const pattern = await getPattern();
+                 this.refresh();
+                 const pattern = await getPattern();
                 if (!pattern) { return; }
                 watcher = vscode.workspace.createFileSystemWatcher(pattern);
                 watcher.onDidCreate(() => this.refresh());

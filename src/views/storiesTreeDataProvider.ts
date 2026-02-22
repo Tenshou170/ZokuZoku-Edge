@@ -40,18 +40,16 @@ const categoryNames: {[key: string]: string} = {
     "08": vscode.l10n.t("> Scenario Intros"),
     "09": vscode.l10n.t("> Story Events"),
     "10": vscode.l10n.t("> Anniv. Stories"),
-    "11": vscode.l10n.t("> G1 Outfit Episodes"),
+    "11": vscode.l10n.t("> Valentine Episodes"),
     "12": vscode.l10n.t("> New Year Short Episodes"),
-    "13": vscode.l10n.t("Kirari Magic Show"),
-    "14": vscode.l10n.t("The White Era"),
+    "13": vscode.l10n.t("> Kirari Magic Show"),
+    "14": vscode.l10n.t("> The White Era"),
     "40": vscode.l10n.t("> Scenario Career Events"),
     "50": vscode.l10n.t("> Umamusume Career Events"),
     "80": vscode.l10n.t("> Support Card Events (R)"),
     "82": vscode.l10n.t("> Support Card Events (SR)"),
     "83": vscode.l10n.t("> Support Card Events (SSR)")
 };
-
-
 
 export default class StoriesTreeDataProvider extends RefreshableTreeDataProviderBase implements vscode.TreeDataProvider<vscode.TreeItem> {
     private static _instance?: StoriesTreeDataProvider;
@@ -90,11 +88,10 @@ export default class StoriesTreeDataProvider extends RefreshableTreeDataProvider
                 return (await utils.getTextDataCategory(92))[+storyId];
         }
     
-        // Training events span across multiple categories
         return (await utils.getTextDataCategoryCached(181))[+storyId];
     }
 
-    static register(context: vscode.ExtensionContext): vscode.Disposable {
+    static register(_context: vscode.ExtensionContext): vscode.Disposable {
         const treeDataProvider = new StoriesTreeDataProvider;
         StoriesTreeDataProvider._instance = treeDataProvider;
 
@@ -121,7 +118,6 @@ export default class StoriesTreeDataProvider extends RefreshableTreeDataProvider
 
         const items: vscode.TreeItem[] = [];
         if (!element) {
-            // Categories
             const result = await queryCategories();
             for (const [ id ] of result[0].rows) {
                 let label = id;

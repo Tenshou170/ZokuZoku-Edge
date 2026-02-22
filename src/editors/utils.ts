@@ -71,17 +71,6 @@ export function makeEditForStringProperty(key: string, value: string | null): Js
 }
 
 export function makeUpdateEditForArray(index: number, value: any): JsonEdit<any> {
-    let editValue: JsonEdit<any>;
-    if (Array.isArray(value) || typeof value === "object") {
-        editValue = {
-            type: Array.isArray(value) ? "array" : "object",
-            action: "set",
-            values: value
-        };
-    }
-    else {
-        editValue = value;
-    }
     return {
         type: "array",
         action: "update",

@@ -6,7 +6,7 @@
   "repository": {
     "url": "https://github.com/THShafi170/ZokuZoku-Edge"
   },
-  "version": "1.1.2",
+  "version": "1.1.3",
   "engines": {
     "vscode": "^1.96.0",
     "node": ">=22"
@@ -156,6 +156,10 @@
       {
         "command": "zokuzoku.clearCache",
         "title": "%command.clearCache.title%"
+      },
+      {
+        "command": "zokuzoku.hachimi.softReset",
+        "title": "%command.hachimi.softReset.title%"
       },
       {
         "command": "zokuzoku.hachimi.reloadLocalizedData",

@@ -6,10 +6,11 @@ import * as tar from 'tar';
 import { spawn } from "child_process";
 
 import downloader from './core/downloader';
-import { getAllGameInstallPaths, expandEnvironmentVariables } from './core/utils';
+import { getAllGameInstallPaths, getEntryStatus } from './core/utils';
 import config, { CONFIG_SECTION } from './config';
-import { whenReady, setReady } from './extensionContext';
-import { ZOKUZOKU_DIR, PYMPORT_DIR, PYMPORT_INSTALLED_FILE, PYMPORT_VER, UNITYPY_VER, APSW_VER } from "./defines";
+import { setReady } from './extensionContext';
+import { ZOKUZOKU_DIR, PYMPORT_DIR, PYTHON_PACKAGES_DIR, PYMPORT_INSTALLED_FILE, PYMPORT_VER, UNITYPY_VER, APSW_VER } from "./defines";
+import SQLite from './sqlite';
 
 const YES = vscode.l10n.t('Yes');
 const NO = vscode.l10n.t('No');
@@ -17,9 +18,6 @@ const OK = vscode.l10n.t('OK');
 const CANCEL = vscode.l10n.t('Cancel');
 
 import { initPythonBridge, getUnityPyVersion, checkApsw } from './pythonBridge';
-// Any other module from this package must be imported dynamically,
-// after pymport bindings have been downloaded.
-
 
 async function checkPymport(): Promise<boolean> {
     try {
@@ -65,7 +63,7 @@ async function checkUnityPy(): Promise<boolean> {
         return versionResult.unitypy_version === UNITYPY_VER;
     }
     catch (e) {
-        console.error("checkUnityPy failed:", e);
+        console.error(`checkUnityPy failed: ${e}`);
         return false;
     }
 }
@@ -75,7 +73,7 @@ async function checkApswPackage(): Promise<boolean> {
         const result = await checkApsw();
         return result.apsw_installed;
     } catch (e) {
-        console.error("checkApswPackage failed:", e);
+        console.error(`checkApswPackage failed: ${e}`);
         return false;
     }
 }
@@ -91,12 +89,28 @@ async function installUnityPy() {
         throw new Error(vscode.l10n.t('Python binary not found in pymport install dir'));
     }
 
-    const pip = spawn(python, ['-m', 'pip', 'install', 'UnityPy==' + UNITYPY_VER, 'apsw-sqlite3mc==' + APSW_VER, '--force-reinstall'], {
+    const env: any = {
+        ...process.env,
+        PYTHONHOME: PYMPORT_DIR,
+        SSL_CERT_FILE: path.join(PYMPORT_DIR, 'cacert.pem'),
+    };
+
+    const oldPythonPath = process.env.PYTHONPATH;
+    env.PYTHONPATH = oldPythonPath 
+        ? `${PYTHON_PACKAGES_DIR}${path.delimiter}${oldPythonPath}` 
+        : PYTHON_PACKAGES_DIR;
+
+    if (os.platform() === 'linux') {
+        const libDir = path.join(PYMPORT_DIR, 'lib');
+        env.LD_LIBRARY_PATH = env.LD_LIBRARY_PATH ? `${libDir}:${env.LD_LIBRARY_PATH}` : libDir;
+        env.OPENSSL_CONF = '/dev/null';
+    } else if (os.platform() === 'win32') {
+        env.PATH = env.PATH ? `${PYMPORT_DIR};${env.PATH}` : PYMPORT_DIR;
+    }
+
+    const pip = spawn(python, ['-m', 'pip', 'install', '--target', PYTHON_PACKAGES_DIR, 'UnityPy==' + UNITYPY_VER, 'apsw-sqlite3mc==' + APSW_VER, '--force-reinstall'], {
         stdio: 'inherit',
-        env: {
-            ...process.env,
-            PYTHONHOME: PYMPORT_DIR
-        }
+        env
     });
 
     const progressOptions = {
@@ -113,7 +127,7 @@ async function installUnityPy() {
                         resolve();
                         return;
                     }
-                    reject(new Error(vscode.l10n.t('Python pip process exited with code {0}', { 0: code })));
+                    reject(new Error(vscode.l10n.t('Python pip process exited with code {0}', { 0: code ?? -1 })));
                 });
         });
     });
@@ -213,24 +227,6 @@ async function checkLocalizeDictDump() {
             throw new Error("Localize dict dump selection was cancelled.");
         }
     }
-    else {
-        vscode.window.showWarningMessage(
-            vscode.l10n.t('The localize dict dump path has not been set and was not automatically detected. Please set it manually in Settings.')
-        );
-        return;
-    }
-
-    if (foundDumpPaths.length > 1) {
-        const selectedPath = await vscode.window.showQuickPick(foundDumpPaths, {
-            placeHolder: "Multiple localize_dump.json files found. Please select which one to use.",
-            ignoreFocusOut: true
-        });
-        if (selectedPath) {
-            await config().update("localizeDictDump", selectedPath, true);
-        } else {
-            throw new Error("Localize dict dump selection was cancelled.");
-        }
-    }
 }
 
 async function checkEnabled() {
@@ -256,6 +252,31 @@ async function checkEnabled() {
 
 
 async function runInitialSetup(context: vscode.ExtensionContext) {
+    if (os.platform() === 'linux') {
+        process.env.OPENSSL_CONF = '/dev/null';
+        
+        
+        const libDir = path.join(PYMPORT_DIR, 'lib');
+        process.env.LD_LIBRARY_PATH = process.env.LD_LIBRARY_PATH 
+            ? `${libDir}:${process.env.LD_LIBRARY_PATH}` 
+            : libDir;
+    } else if (os.platform() === 'win32') {
+        process.env.PATH = process.env.PATH
+            ? `${PYMPORT_DIR};${process.env.PATH}`
+            : PYMPORT_DIR;
+    }
+    
+    
+    process.env.PYTHONHOME = PYMPORT_DIR;
+    
+    
+    const oldPythonPath = process.env.PYTHONPATH;
+    process.env.PYTHONPATH = oldPythonPath 
+        ? `${PYTHON_PACKAGES_DIR}${path.delimiter}${oldPythonPath}` 
+        : PYTHON_PACKAGES_DIR;
+        
+    process.env.SSL_CERT_FILE = path.join(PYMPORT_DIR, 'cacert.pem');
+
     initPythonBridge();
 
     const pyInstalled = await checkPymport();
@@ -279,7 +300,6 @@ async function runInitialSetup(context: vscode.ExtensionContext) {
     await checkGameDataDir();
     await checkLocalizeDictDump();
 
-    const { default: SQLite } = await import('./sqlite/index.js');
     SQLite.init(context.extensionPath);
 
     setReady();
@@ -287,23 +307,59 @@ async function runInitialSetup(context: vscode.ExtensionContext) {
     await checkEnabled();
 }
 
-// note: vscode won't wait for this promise
+let coreDisposable: vscode.Disposable | undefined;
+
+async function startCore(context: vscode.ExtensionContext) {
+    if (coreDisposable) {
+        coreDisposable.dispose();
+    }
+
+    const { registerCommands } = await import("./commands.js");
+    const { registerEditors } = await import("./editors/index.js");
+    const { registerViews } = await import("./views/index.js");
+
+    const disposables = [
+        ...registerCommands(context),
+        ...registerEditors(context),
+        ...registerViews(context)
+    ];
+
+    coreDisposable = vscode.Disposable.from(...disposables);
+    context.subscriptions.push(coreDisposable);
+
+    // Background scanner to warm up status cache
+    (async () => {
+        const patterns = [
+            '**/story/data/**/*.json',
+            '**/home/data/**/*.json',
+            '**/race/storyrace/**/*.json'
+        ];
+        for (const pattern of patterns) {
+            const uris = await vscode.workspace.findFiles(pattern);
+            for (const uri of uris) {
+                await getEntryStatus(uri);
+            }
+        }
+    })();
+}
+
 export async function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.commands.registerCommand('zokuzoku.retrySetup', () => {
-        runInitialSetup(context).catch(err => {
-            const message = err instanceof Error ? err.message : String(err);
-            vscode.window.showErrorMessage(`ZokuZoku setup failed: ${message}`, "Retry Setup")
-                .then(selection => {
-                    if (selection === "Retry Setup") {
-                        vscode.commands.executeCommand('zokuzoku.retrySetup');
-                    }
-                });
-        });
+        runInitialSetup(context)
+            .then(() => startCore(context))
+            .catch(err => {
+                const message = err instanceof Error ? err.message : String(err);
+                vscode.window.showErrorMessage(`ZokuZoku setup failed: ${message}`, "Retry Setup")
+                    .then(selection => {
+                        if (selection === "Retry Setup") {
+                            vscode.commands.executeCommand('zokuzoku.retrySetup');
+                        }
+                    });
+            });
     }));
 
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(async event => {
         if (event.affectsConfiguration(CONFIG_SECTION)) {
-            const { default: SQLite } = await import('./sqlite/index.js');
             SQLite.init(context.extensionPath);
             checkEnabled();
         }
@@ -311,17 +367,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
     try {
         await runInitialSetup(context);
-        await runInitialSetup(context);
-        
-        const { registerCommands } = await import("./commands.js");
-        const { registerEditors } = await import("./editors/index.js");
-        const { registerViews } = await import("./views/index.js");
-
-        context.subscriptions.push(
-            ...registerCommands(context),
-            ...registerEditors(context),
-            ...registerViews(context)
-        );
+        await startCore(context);
     } catch (e) {
         const message = e instanceof Error ? e.message : String(e);
         vscode.window.showErrorMessage(`ZokuZoku setup failed: ${message}`, "Retry Setup")

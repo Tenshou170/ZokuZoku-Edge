@@ -1,4 +1,3 @@
-import * as utils from './utils.js';
 
 export interface FormatterOptions {
     keyOrder?: (string | RegExp)[];
@@ -47,7 +46,6 @@ export function createFormatter(options: FormatterOptions = {}) {
             if (keys.length === 0) { return "{}"; }
 
             if (shouldCompact(value)) {
-                // Ensure key order even in compact mode
                 const sortedKeys = keys.sort((a, b) => getKeyPriority(a) - getKeyPriority(b));
                 const obj: any = {};
                 for (const key of sortedKeys) {
@@ -60,9 +58,7 @@ export function createFormatter(options: FormatterOptions = {}) {
                 const prioA = getKeyPriority(a);
                 const prioB = getKeyPriority(b);
                 if (prioA !== prioB) { return prioA - prioB; }
-                // Native sort as fallback for same priority
-                return 0; // Keep original order if priority is same? Or alphabetical? 
-                // Let's stick to stable sort of existing keys if no priority
+                return 0;
             });
 
             const entries = keys.map(key => {

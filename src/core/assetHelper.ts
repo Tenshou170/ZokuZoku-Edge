@@ -4,16 +4,26 @@ import path from "path";
 import fs from "fs/promises";
 import downloader from "./downloader";
 import config from "../config";
-import { loadBundle as loadBundleViaBridge } from '../pythonBridge';
-import { resolve as resolvePath } from 'path';
 import { whenReady } from '../extensionContext';
 
+const assetHashCache = new Map<string, string | undefined>();
+
 async function getAssetHash(name: string) {
+    if (assetHashCache.has(name)) {
+        return assetHashCache.get(name);
+    }
+
     await whenReady;
     const sqlite = SQLite.instance;
     const query = `SELECT h FROM a WHERE n = '${name.replace("'", "")}'`;
     const queryRes = await sqlite.queryMeta(query);
-    return queryRes.at(0)?.rows.at(0)?.at(0);
+    const hash = queryRes.at(0)?.rows.at(0)?.at(0);
+    assetHashCache.set(name, hash);
+    return hash;
+}
+
+function clearAssetHashCache() {
+    assetHashCache.clear();
 }
 
 function getAssetPath(hash: string) {
@@ -130,5 +140,7 @@ async function loadGenericAssetByHash(hash: string): Promise<string> {
 export default {
     getAssetHash,
     getAssetPath,
-    ensureAssetDownloaded
+    ensureAssetDownloaded,
+    clearAssetHashCache,
+    loadGenericAsset
 };

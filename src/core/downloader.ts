@@ -14,7 +14,7 @@ function downloadToStream(url: string | URL, title: string, output: Writable): T
         return new Promise((resolve, reject) => {
             const req = https.get(url, { maxBodyLength: Infinity }, res => {
                 if (res.statusCode !== 200) {
-                    reject(new Error(vscode.l10n.t('Server returned status code: {0}', {0: res.statusCode})));
+                    reject(new Error(vscode.l10n.t('Server returned status code: {0}', {0: res.statusCode ?? 0})));
                     return;
                 }
 
@@ -66,7 +66,7 @@ async function downloadToFile(url: string | URL, title: string, filePath: fs.Pat
     }
     catch (e) {
         await fsPromises.unlink(filePath);
-        console.error(e);
+        console.error(`${e}`);
         throw e;
     }
 }

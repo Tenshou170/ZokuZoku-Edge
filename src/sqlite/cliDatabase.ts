@@ -4,9 +4,9 @@ import { EOL } from "os";
 import { Database } from "./interfaces/database";
 const csvparser = require("csv-parser");
 
-const NO_HANDLER = (...args: any[]) => { }; // this is just an empty function to handle callbacks i dont care about
+const NO_HANDLER = (..._args: any[]) => { }; // this is just an empty function to handle callbacks i dont care about
 
-const RESULT_SEPARATOR = "x3e2cv7M"; // just a random separator to recognize when there are no more rows
+const RESULT_SEPARATOR = "x3e2cv7M"; // result row group separator
 
 export class CliDatabase implements Database {
     readonly sqliteProcess?: ChildProcess;
@@ -74,9 +74,7 @@ export class CliDatabase implements Database {
             this.onData(data);
         });
 
-        // register an empty handler for stdio,
-        // we dont care about errors,
-        // they will only occur when the process stops because of -bail
+        // silence stdio errors during -bail execution
         this.sqliteProcess.stdin!.once("error", NO_HANDLER);
         this.sqliteProcess.stdout!.once("error", NO_HANDLER);
         this.csvParser.once("error", NO_HANDLER);
@@ -94,7 +92,7 @@ export class CliDatabase implements Database {
             if (!this.busy) {
                 this.next();
             }
-        } catch (err) {
+        } catch {
             //
         }
     }
@@ -119,7 +117,7 @@ export class CliDatabase implements Database {
             if (!this.busy) {
                 this.next();
             }
-        } catch (err) {
+        } catch {
             //
         }
     }
@@ -141,7 +139,7 @@ export class CliDatabase implements Database {
 
         try {
             this.sqliteProcess.stdin!.write(text);
-        } catch (err) {
+        } catch {
             //
         }
     }
@@ -217,8 +215,6 @@ export class CliDatabase implements Database {
                 const rest = match[2];
                 this.errStr = `${token ? `near "${token}": ` : ``}${rest}`;
             }
-
-            //if (this.sqliteProcess) this.sqliteProcess.kill();
         }
     }
 

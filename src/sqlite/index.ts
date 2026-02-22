@@ -5,7 +5,7 @@
     Modified for ZokuZoku
 */
 
-import { workspace, window } from "vscode";
+import { window } from "vscode";
 import { ResultSet } from "./common";
 import { executeQuery, QueryExecutionOptions } from "./queryExecutor";
 import { validateSqliteCommand } from "./sqliteCommandValidation";

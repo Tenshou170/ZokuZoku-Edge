@@ -13,7 +13,7 @@ export class EditorBase {
         protected readonly context: vscode.ExtensionContext
     ) { }
 
-    protected getHtmlForWebview(webview: vscode.Webview): string {
+    protected getHtmlForWebview(_webview: vscode.Webview): string {
         return "";
     }
 
@@ -42,7 +42,6 @@ export class EditorBase {
             webviewPanel.webview.postMessage(message);
         };
 
-        // ---------- Handle common messages ----------
         webview.onDidReceiveMessage((message: EditorMessage) => {
             switch (message.type) {
                 case "showMessage": {

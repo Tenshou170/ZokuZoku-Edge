@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+
 import SQLite from '../sqlite';
 import fs from 'fs/promises';
 import path from 'path';
@@ -47,7 +48,7 @@ export async function getTranslatedTextData(): Promise<any> {
                  const str = Buffer.from(data).toString('utf8');
                  _translatedTextDataCache = JSON.parse(str);
              } catch (e) {
-                 console.error(e);
+                 console.error(`${e}`);
                  _translatedTextDataCache = null;
              }
          } else {
@@ -101,63 +102,103 @@ export async function pathExists(path: PathLike): Promise<boolean> {
     }
 }
 
+// mtime+size-based cache so tree view refreshes don't re-parse every JSON file.
+interface StatusCacheEntry {
+    status: EntryStatus;
+    mtime: number;
+    size: number;
+}
+const statusCache = new Map<string, StatusCacheEntry>();
+
+export function invalidateStatusCache(uri?: vscode.Uri) {
+    if (uri) {
+        statusCache.delete(uri.toString());
+    } else {
+        statusCache.clear();
+    }
+}
+
 /**
  * Check the translation status of a file.
  * Returns EntryStatus.Missing if file doesn't exist.
  * Returns EntryStatus.Ghost if file exists but has no translated content.
  * Returns EntryStatus.Translated if file has actual translated content.
+ * 
+ * Uses an mtime/size cache to skip re-parsing unchanged files.
  */
 export async function getEntryStatus(uri: vscode.Uri | undefined): Promise<EntryStatus> {
-    if (!uri || !await uriExists(uri)) {
+    if (!uri) {
         return EntryStatus.Missing;
     }
 
+    let stat: vscode.FileStat;
+    try {
+        stat = await vscode.workspace.fs.stat(uri);
+    } catch {
+        // File doesn't exist — remove any stale cache entry
+        statusCache.delete(uri.toString());
+        return EntryStatus.Missing;
+    }
+
+    const key = uri.toString();
+    const cached = statusCache.get(key);
+    if (cached && cached.mtime === stat.mtime && cached.size === stat.size) {
+        return cached.status;
+    }
+
+    // File changed or not yet cached — full parse
+    let status: EntryStatus;
     try {
         const data = await vscode.workspace.fs.readFile(uri);
         const content = Buffer.from(data).toString('utf8');
         const json = JSON.parse(content);
 
-        if (!json) { return EntryStatus.Ghost; }
-
-        function hasString(obj: any): boolean {
-            if (typeof obj === 'string') {
-                return obj.trim().length > 0;
-            }
-            if (Array.isArray(obj)) {
-                return obj.some(hasString);
-            }
-            if (obj && typeof obj === 'object') {
-                return Object.values(obj).some(hasString);
-            }
-            return false;
+        if (!json) {
+            status = EntryStatus.Ghost;
+        } else {
+            status = checkJsonForTranslations(json);
         }
-
-        // Specific check for Story/Race/Lyrics structures
-        if (json.text_block_list && Array.isArray(json.text_block_list)) {
-            // StoryTimeline structure
-            for (const block of json.text_block_list) {
-                if (block.text && typeof block.text === 'string' && block.text.trim().length > 0) {
-                    return EntryStatus.Translated;
-                }
-            }
-        } else if (Array.isArray(json)) {
-            // RaceStory/Simple Array structure
-            if (json.some(hasString)) {
-                return EntryStatus.Translated;
-            }
-        } else if (typeof json === 'object') {
-            // Lyrics/MDB Flat Object structure
-            if (Object.values(json).some(hasString)) {
-                return EntryStatus.Translated;
-            }
-        }
-
-        return EntryStatus.Ghost;
     }
     catch {
-        // If we can't read/parse, treat as ghost if exists, or missing
-        return EntryStatus.Ghost;
+        status = EntryStatus.Ghost;
     }
+
+    statusCache.set(key, { status, mtime: stat.mtime, size: stat.size });
+    return status;
+}
+
+function checkJsonForTranslations(json: any): EntryStatus {
+    function hasString(obj: any): boolean {
+        if (typeof obj === 'string') {
+            return obj.trim().length > 0;
+        }
+        if (Array.isArray(obj)) {
+            return obj.some(hasString);
+        }
+        if (obj && typeof obj === 'object') {
+            return Object.values(obj).some(hasString);
+        }
+        return false;
+    }
+
+    // Specific check for Story/Race/Lyrics structures
+    if (json.text_block_list && Array.isArray(json.text_block_list)) {
+        for (const block of json.text_block_list) {
+            if (block.text && typeof block.text === 'string' && block.text.trim().length > 0) {
+                return EntryStatus.Translated;
+            }
+        }
+    } else if (Array.isArray(json)) {
+        if (json.some(hasString)) {
+            return EntryStatus.Translated;
+        }
+    } else if (typeof json === 'object') {
+        if (Object.values(json).some(hasString)) {
+            return EntryStatus.Translated;
+        }
+    }
+
+    return EntryStatus.Ghost;
 }
 
 export function makeStatusLabel(label: string, status: EntryStatus) {

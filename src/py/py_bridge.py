@@ -1,6 +1,14 @@
 import sys
 import json
-import UnityPy
+import os
+try:
+    import UnityPy
+except ImportError as e:
+    print(json.dumps({
+        "status": "error",
+        "message": f"Failed to import UnityPy: {e}\nsys.path: {sys.path}\nsys.prefix: {sys.prefix}\nos.environ['PYTHONPATH']: {os.environ.get('PYTHONPATH')}"
+    }))
+    sys.exit(1)
 from pathlib import Path
 
 BUNDLE_BASE_KEY = "532b4631e4a7b9473e7cfb"

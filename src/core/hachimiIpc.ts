@@ -7,6 +7,9 @@ export type Command = {
     block_id: number,
     incremental: boolean
 } | {
+    type: "SoftReset",
+    exec: boolean
+} | {
     type: "ReloadLocalizedData"
 };
 

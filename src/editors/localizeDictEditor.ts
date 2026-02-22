@@ -94,7 +94,6 @@ export class LocalizeDictEditorProvider
                             title: vscode.l10n.t('Localize dict')
                         });
 
-                        // Just making sure to prevent data races
                         initReadPromise.finally(() => {
                             nodesPromise
                                 .then(nodes => {
@@ -110,7 +109,7 @@ export class LocalizeDictEditorProvider
                     }
 
                     case 'getTextSlotContent': {
-                        const [_, key] = message.entryPath;
+                        const [, key] = message.entryPath;
                         postMessage({
                             type: 'setTextSlotContent',
                             entryPath: message.entryPath,
@@ -121,7 +120,7 @@ export class LocalizeDictEditorProvider
                     }
 
                     case 'getExists': {
-                        const [_, key] = message.path;
+                        const [, key] = message.path;
                         postMessage({
                             type: 'setExists',
                             path: message.path,
@@ -131,11 +130,10 @@ export class LocalizeDictEditorProvider
                     }
 
                     case 'setTextSlotContent': {
-                        const [_, key] = message.entryPath;
+                        const [, key] = message.entryPath;
                         if (typeof key !== 'string') {
                             break;
                         }
-                    // Wait for previous edit to finish before applying another
 
                         prevEditPromise = prevEditPromise.then(async () => {
                             try {

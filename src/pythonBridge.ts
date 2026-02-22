@@ -1,9 +1,8 @@
 import { spawn } from 'child_process';
 import os from 'os';
 import path from 'path';
-import { PYMPORT_DIR } from './defines';
+import { PYMPORT_DIR, PYTHON_PACKAGES_DIR } from './defines';
 import { ResultSet } from './sqlite/common';
-import config from './config';
 import SQLite from './sqlite';
 
 export interface StoryChoiceData {
@@ -53,14 +52,31 @@ async function execute<T>(command: string, params: object): Promise<T> {
     const paramsJson = JSON.stringify(params);
 
     return new Promise((resolve, reject) => {
+        const env: any = { 
+            ...process.env, 
+            PYTHONHOME: PYMPORT_DIR,
+            SSL_CERT_FILE: path.join(PYMPORT_DIR, 'cacert.pem'),
+        };
+
+        const oldPythonPath = process.env.PYTHONPATH;
+        env.PYTHONPATH = oldPythonPath 
+            ? `${PYTHON_PACKAGES_DIR}${path.delimiter}${oldPythonPath}` 
+            : PYTHON_PACKAGES_DIR;
+    
+        if (os.platform() === 'linux') {
+            const libDir = path.join(PYMPORT_DIR, 'lib');
+            env.LD_LIBRARY_PATH = env.LD_LIBRARY_PATH ? `${libDir}:${env.LD_LIBRARY_PATH}` : libDir;
+            env.OPENSSL_CONF = '/dev/null';
+        } else if (os.platform() === 'win32') {
+            env.PATH = env.PATH ? `${PYMPORT_DIR};${env.PATH}` : PYMPORT_DIR;
+        }
+    
         const childProcess = spawn(pythonExecutable, [
             '-u',
             bridgeScriptPath,
             command,
             paramsJson
-        ], {
-            env: { ...process.env, PYTHONHOME: PYMPORT_DIR }
-        });
+        ], { env });
 
         let stdoutData = '';
         let stderrData = '';
@@ -159,7 +175,6 @@ export async function extractStoryData(
         "meta_key": metaKey
     };
 
-    console.log("[ZokuZoku] Sending parameters to Python bridge:", params);
 
     return execute<ExtractedStoryData>('extract_story_data', params);
 }

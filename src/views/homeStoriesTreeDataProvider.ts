@@ -51,7 +51,7 @@ export default class HomeStoriesTreeDataProvider extends RefreshableTreeDataProv
     private static _instance?: HomeStoriesTreeDataProvider;
     static get instance(): HomeStoriesTreeDataProvider | undefined { return this._instance; }
 
-    static register(context: vscode.ExtensionContext): vscode.Disposable {
+    static register(_context: vscode.ExtensionContext): vscode.Disposable {
         const treeDataProvider = new HomeStoriesTreeDataProvider;
         HomeStoriesTreeDataProvider._instance = treeDataProvider;
 
@@ -78,7 +78,6 @@ export default class HomeStoriesTreeDataProvider extends RefreshableTreeDataProv
 
         const items: vscode.TreeItem[] = [];
         if (!element) {
-            // Categories
             const result = await queryCategories();
             for (const [ id ] of result[0].rows) {
                 items.push({
@@ -109,7 +108,6 @@ export default class HomeStoriesTreeDataProvider extends RefreshableTreeDataProv
                     break;
                 }
                 case TreeLevel.Group: {
-                    // This level is an abstraction
                     const result = await queryCharacters(categoryId, groupId);
                     for (const [ charaId ] of result[0].rows) {
                         const itemId = `${categoryId}/${groupId}/${charaId}`;

@@ -108,7 +108,7 @@ export class JsonDocument<T> extends vscode.Disposable {
     }
 
     watchFileSystem() {
-        // Detect file changes in fs (will not trigger when editing, only on save)
+        // Detect file changes
         const pattern = new vscode.RelativePattern(this.uri, "*");
         const watcher = vscode.workspace.createFileSystemWatcher(pattern);
         watcher.onDidCreate(() => this.readFile().catch(_ => {}));
@@ -221,9 +221,8 @@ export class JsonDocument<T> extends vscode.Disposable {
             });
         }
 
-        // Add prop right after last prop or as the first property, indenting the closing bracket
+        // Add property
         const indent = " ".repeat(indentLevel * BASE_INDENT);
-        // Just the entries without the brackets and the leading/preceding newlines
         const newEntries = utils.addIndent(JSON.stringify(content, null, BASE_INDENT).slice(2, -2), indent, true);
         const insert = hasEntry ?
             (",\n" + newEntries) :
@@ -305,7 +304,7 @@ export class JsonDocument<T> extends vscode.Disposable {
             switch (edit.type) {
                 case "object":
                     if (node.type !== "Object") {
-                        console.error(node);
+                        console.error(`${JSON.stringify(node)}`);
                         throw new Error(vscode.l10n.t('JSON node type differs from schema'));
                     }
                     switch (edit.action) {
@@ -348,7 +347,7 @@ export class JsonDocument<T> extends vscode.Disposable {
 
                 case "array":
                     if (node.type !== "Array") {
-                        console.error(node);
+                        console.error(`${JSON.stringify(node)}`);
                         throw new Error(vscode.l10n.t('JSON node type differs from schema'));
                     }
                     switch (edit.action) {
@@ -383,7 +382,7 @@ export class JsonDocument<T> extends vscode.Disposable {
     async applyEdit(data: JsonEdit<T>, options: {force?: boolean, save?: boolean} = {}): Promise<boolean> {
         let document: vscode.TextDocument | undefined;
         try {
-            // Ignore new files that haven't existed in the file system yet
+            // Ignore new files
             if (this.uri.scheme !== "untitled") {
                 await vscode.workspace.fs.stat(this.uri);
             }
@@ -394,7 +393,6 @@ export class JsonDocument<T> extends vscode.Disposable {
         }
         if (!this.readSuccessful && options.force) {
             document = await this.writeTextDocument({ force: true });
-            // The default value is serialized the same way it was parsed, so a safe edit operation is guaranteed
             this.readSuccessful = true;
         }
 
@@ -499,7 +497,7 @@ export class JsonDocument<T> extends vscode.Disposable {
             fileExists = true;
         }
         catch {
-            // File doesn't exist, safe to create
+            // File doesn't exist
         }
 
         if (fileExists && !this.readSuccessful && !options.force) {

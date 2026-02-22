@@ -10,7 +10,7 @@ import { HCA_KEY, ZOKUZOKU_DIR } from '../defines';
 import path from 'path';
 import { AFS2 } from 'cricodecs';
 import fs from 'fs/promises';
-import { pathExists } from '../core/utils';
+import { pathExists, invalidateStatusCache } from '../core/utils';
 import { extractStoryData } from '../pythonBridge';
 import { resolve as resolvePath } from 'path';
 import config from '../config';
@@ -31,7 +31,6 @@ export class StoryEditorProvider extends EditorBase implements vscode.CustomText
     }
 
     resolveCustomTextEditor(document: vscode.TextDocument, webviewPanel: vscode.WebviewPanel, _token: vscode.CancellationToken) {
-        // Json document setup
         const json = new JsonDocument<StoryTimelineDataDict | null>(document.uri, null, async () => {
             const subscribedKey = this.subscribedPath[0];
             if (subscribedKey === "title") {
@@ -86,7 +85,6 @@ export class StoryEditorProvider extends EditorBase implements vscode.CustomText
                 "voice_length"
             ],
             compact: (_value) => {
-                // Never compact any objects - always expand for readability
                 return false;
             }
         }));
@@ -171,7 +169,6 @@ export class StoryEditorProvider extends EditorBase implements vscode.CustomText
         ]);
         panelDisposables.push(json);
 
-        // Messaging setup
         function postMessage(message: StoryEditorControllerMessage) {
             webviewPanel.webview.postMessage(message);
         }
@@ -374,7 +371,37 @@ export class StoryEditorProvider extends EditorBase implements vscode.CustomText
             }
         }));
 
-        panelDisposables.push(new vscode.Disposable(() => {
+        panelDisposables.push(new vscode.Disposable(async () => {
+            try {
+                // Check if file still exists
+                try {
+                    await vscode.workspace.fs.stat(document.uri);
+                } catch {
+                    return;
+                }
+
+                const text = document.getText();
+                let shouldDelete = false;
+
+                if (!text.trim()) {
+                    shouldDelete = true;
+                } else {
+                    try {
+                        const data = JSON.parse(text);
+                        if (data && typeof data === 'object' && Object.keys(data).length === 0) {
+                            shouldDelete = true;
+                        }
+                    } catch {}
+                }
+
+                if (shouldDelete) {
+                    await vscode.workspace.fs.delete(document.uri);
+                    invalidateStatusCache(document.uri);
+                }
+            } catch (e) {
+                console.warn(`Failed to cleanup ghost file ${document.uri}: ${e}`);
+            }
+
             return fs.rm(assetInfo.voiceCacheDir, { recursive: true, force: true });
         }));
     }

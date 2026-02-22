@@ -3,7 +3,6 @@ import SQLite from '../sqlite';
 import { LocalizedDataManager } from './localizedDataManager';
 import path from 'path';
 import fs from 'fs/promises';
-import { PyObject } from 'pymport';
 import json from '../pythonJson';
 import { whenReady } from '../extensionContext';
 
@@ -34,8 +33,8 @@ function zk() {
     }
 
     class JsonValue {
-        private _value: PyObject;
-        constructor(value: PyObject) {
+        private _value: any; // PyObject
+        constructor(value: any) {
             this._value = value;
         }
 
@@ -46,6 +45,7 @@ function zk() {
         }
 
         set(index: any, value: any) {
+            const { PyObject } = require("pymport");
             (this._value as any).__setitem__(index, PyObject.fromJS(value));
         }
 

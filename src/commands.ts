@@ -164,7 +164,7 @@ const COMMANDS: CommandTree = {
                     vscode.window.showInformationMessage(vscode.l10n.t("Cache cleared."));
                 }
                 catch (e) {
-                    vscode.window.showErrorMessage(vscode.l10n.t("Failed to clear cache: {0}", {0: e}));
+                    vscode.window.showErrorMessage(vscode.l10n.t("Failed to clear cache: {0}", {0: String(e)}));
                 }
             });
         },
@@ -175,7 +175,20 @@ const COMMANDS: CommandTree = {
                     vscode.window.showErrorMessage("" + e);
                 });
             },
-            setLocalizedDataDir() {
+            softReset() {
+                 vscode.window.showWarningMessage(
+                     vscode.l10n.t("Are you sure you want to soft reset the game?"),
+                     { modal: true },
+                     vscode.l10n.t("Yes")
+                 ).then(start => {
+                     if (start === vscode.l10n.t("Yes")) {
+                         HachimiIpc.callWithProgress({ type: "SoftReset", exec: true }).catch(e => {
+                             vscode.window.showErrorMessage("" + e);
+                         });
+                     }
+                 });
+             },
+             setLocalizedDataDir() {
                 const localizedDataDir = LocalizedDataManager.instance?.dirUri.fsPath;
                 if (!localizedDataDir) {
                     return vscode.window.showErrorMessage(vscode.l10n.t("ZokuZoku has not been activated."));

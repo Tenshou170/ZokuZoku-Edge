@@ -5,7 +5,14 @@ import automationContext from './automationContext';
 import path from 'path';
 
 function runScript(code: string, filename?: string) {
-    return vm.runInContext(code, vm.createContext(automationContext.instantiate()), { filename });
+    try {
+        const context = automationContext.instantiate();
+        return vm.runInContext(code, vm.createContext(context), { filename });
+    } catch (e) {
+        const message = e instanceof Error ? e.message : String(e);
+        vscode.window.showErrorMessage(vscode.l10n.t('Failed to initialize automation context: {0}', { 0: message }));
+        throw e;
+    }
 }
 
 async function runFile(scriptPath: string) {

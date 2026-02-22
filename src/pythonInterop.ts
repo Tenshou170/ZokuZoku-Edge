@@ -22,7 +22,7 @@ export interface ProxyPyObject<T> {
     __PyObject__: PyObject
 }
 
-export type Proxify<T> = T extends ProxyPyObject<infer _> ? T : // Prevent nested proxies
+export type Proxify<T> = T extends ProxyPyObject<any> ? T : // Prevent nested proxies
     (T extends string | number | Buffer ? {} : // Types that needs no specialization
     (T extends (...a: any) => infer R ? (...a: Parameters<T>) => Proxify<R> : 
     (T extends Array<infer R>         ? ProxyListLike<R> :

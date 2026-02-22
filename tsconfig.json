@@ -1,24 +1,17 @@
 {
-    "compilerOptions": {
-        "module": "Node16",
-        "target": "ES2022",
-        "outDir": "out",
-        "lib": [
-            "ES2022"
-        ],
-        "sourceMap": true,
-        "rootDir": "src",
-        "strict": true,
-        "noFallthroughCasesInSwitch": true,
-        "noImplicitOverride": true,
-        "forceConsistentCasingInFileNames": true,
-        "skipLibCheck": true,
-        "esModuleInterop": true,
-        "verbatimModuleSyntax": true
-    },
-    "exclude": [
-        "node_modules",
-        "out",
-        "webviews"
-    ]
+  "compilerOptions": {
+    "module": "Node16",
+    "target": "ES2022",
+    "outDir": "out",
+    "lib": ["ES2022"],
+    "sourceMap": true,
+    "rootDir": "src",
+    "strict": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true
+  },
+  "exclude": ["node_modules", "out", "webviews"]
 }

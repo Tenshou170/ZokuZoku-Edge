@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { getEditorHtml, makeEditForStringProperty } from './utils';
 import { ControllerMessage, EditorMessage, IEntryTreeNode, ITreeNode, TreeNodeId } from './sharedTypes';
 import { JsonDocument, utils } from '../core';
+import { invalidateStatusCache } from '../core/utils';
 import config from '../config';
 import textDataCategories from './mdbTextDataCategories';
 import SQLite, { MDB_TABLE_COLUMNS, MDB_TABLE_NAMES, MdbTableName } from '../sqlite';
@@ -31,7 +32,6 @@ const TABLE_ENTRY_NAME_GETTERS: {
     [K in MdbTableName]?: (categoryColumn: string | null, idColumn: string) => Promise<string | void> | string | void
 } = {
     "text_data": async (category, index) => {
-        // ???
         if (!category) { return; }
 
         if (TEXT_DATA_CHARACTER_CATEGORIES.has(+category)) {
@@ -52,7 +52,6 @@ export class MdbEditorProvider extends EditorBase implements vscode.CustomTextEd
     resolveCustomTextEditor(document: vscode.TextDocument, webviewPanel: vscode.WebviewPanel, _token: vscode.CancellationToken) {
         const tableName = this.getTableName(document.uri);
         
-        // Json document setup
         const json = new JsonDocument<{[key: string]: string | {[key: string]: string}} | null>(document.uri, null, () => {
             const content = getDictValue(this.subscribedPath);
             postMessage({
@@ -90,11 +89,9 @@ export class MdbEditorProvider extends EditorBase implements vscode.CustomTextEd
                 valueNode.value;
         }
         
-        // Init webview
         const panelDisposables = this.setupWebview(webviewPanel);
         panelDisposables.push(json);
 
-        // Messaging setup
         function postMessage(message: ControllerMessage) {
             webviewPanel.webview.postMessage(message);
         }
@@ -208,7 +205,7 @@ export class MdbEditorProvider extends EditorBase implements vscode.CustomTextEd
 
                 case "getCategoryFull":
                     if (data.categoryMap) {
-                        if (json.ast.type != "Object") { break; }
+                    if (json.ast.type !== "Object") { break; }
 
                         const categoryId = message.path[0];
                         const category = data.categoryMap[categoryId];
@@ -236,7 +233,38 @@ export class MdbEditorProvider extends EditorBase implements vscode.CustomTextEd
                     }
                     break;
             }
+            panelDisposables.push(new vscode.Disposable(async () => {
+            try {
+                // Check if file still exists
+                try {
+                    await vscode.workspace.fs.stat(document.uri);
+                } catch {
+                    return;
+                }
+
+                const text = document.getText();
+                let shouldDelete = false;
+
+                if (!text.trim()) {
+                    shouldDelete = true;
+                } else {
+                    try {
+                        const data = JSON.parse(text);
+                        if (data && typeof data === 'object' && Object.keys(data).length === 0) {
+                            shouldDelete = true;
+                        }
+                    } catch {}
+                }
+
+                if (shouldDelete) {
+                    await vscode.workspace.fs.delete(document.uri);
+                    invalidateStatusCache(document.uri);
+                }
+            } catch (e) {
+                console.warn(`Failed to cleanup ghost file ${document.uri}: ${e}`);
+            }
         }));
+    }));
     }
 
     static nextTableName: MdbTableName | undefined;
@@ -248,7 +276,6 @@ export class MdbEditorProvider extends EditorBase implements vscode.CustomTextEd
             return tableName;
         }
         else {
-            // dumb table name inference
             const pathSplit = uri.path.split("/");
             const filename = pathSplit.at(pathSplit.length - 1);
             if (!filename) {
@@ -265,11 +292,6 @@ export class MdbEditorProvider extends EditorBase implements vscode.CustomTextEd
         }
 
         if (tableName) {
-            /*
-            vscode.window.showWarningMessage(
-                `MDB Editor was launched externally, the table name has been inferred from the filename: ${tableName}`
-            );
-            */
             return tableName;
         }
         else {

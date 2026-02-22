@@ -41,7 +41,7 @@ export default class MainStoriesTreeDataProvider extends RefreshableTreeDataProv
     private static _instance?: MainStoriesTreeDataProvider;
     static get instance(): MainStoriesTreeDataProvider | undefined { return this._instance; }
 
-    static register(context: vscode.ExtensionContext): vscode.Disposable {
+    static register(_context: vscode.ExtensionContext): vscode.Disposable {
         const treeDataProvider = new MainStoriesTreeDataProvider;
         MainStoriesTreeDataProvider._instance = treeDataProvider;
 
@@ -75,7 +75,6 @@ export default class MainStoriesTreeDataProvider extends RefreshableTreeDataProv
 
         const items: vscode.TreeItem[] = [];
         if (!element) {
-            // Acts
             const result = await queryAllChapters();
             const chapterRows = result[0].rows;
             const lastChapter = chapterRows?.[chapterRows.length - 1]?.[0];
@@ -145,7 +144,7 @@ export default class MainStoriesTreeDataProvider extends RefreshableTreeDataProv
                         let dictPath: vscode.Uri | undefined;
                         let command: vscode.Command | undefined;
                         switch (storyType) {
-                            case 1: { // normal story
+                            case 1: {
                                 iconId = "book";
                                 const comp = utils.getStoryIdComponents(storyId);
                                 dictPath = await ldManager.getPathUri("assets_dir", undefined,
@@ -158,7 +157,7 @@ export default class MainStoriesTreeDataProvider extends RefreshableTreeDataProv
                                 break;
                             }
 
-                            case 3: // race story
+                            case 3:
                                 iconId = "device-camera-video";
                                 dictPath = await ldManager.getPathUri("assets_dir", undefined,
                                     "race", "storyrace", "text", `storyrace_${nStoryId}.json`);

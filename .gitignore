@@ -38,3 +38,7 @@ Thumbs.db
 .env
 .env.local
 .env.*.local
+
+# Project specific
+localized_data/
+.gemini/

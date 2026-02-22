@@ -35,7 +35,7 @@ export function isSqliteCommandValid(sqliteCommand: string) {
     const error = proc.stderr.toString();
     const output = proc.stdout.toString();
 
-    // if there is any error the command is note valid
+    // if there is any error the command is not valid
     // Note: the string match is a workaround for CentOS (and maybe other OS's) where the command throws an error at the start but everything works fine
     if (error && !error.match(/: \/lib64\/libtinfo\.so\.[0-9]+: no version information available \(required by /)) {
         console.log(`'${sqliteCommand}' is not a valid SQLite command: ${error}`);
@@ -43,7 +43,6 @@ export function isSqliteCommandValid(sqliteCommand: string) {
     }
 
     // out must be: {version at least 3} {date} {time}}
-    // this is a naive way to check that the command is for sqlite3 after version 3.9
     const match = output.match(/3\.(?:9|[0-9][0-9])\.[0-9]{1,2} [0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}/);
 
     if (!match) {
@@ -61,7 +60,6 @@ export function isSqliteCommandValid(sqliteCommand: string) {
  */
 export function getSqliteBinariesPath(extensionPath: string): string {
     const plat = platform();
-    // const os_arch = arch();
     let sqliteBin: string;
 
     switch (plat) {

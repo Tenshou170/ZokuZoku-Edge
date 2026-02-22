@@ -91,7 +91,7 @@ export class LocalizedDataManager {
 
         instance.configJson.readFile()
         .catch(reason => {
-            console.error(reason);
+            console.error(`${reason}`);
             vscode.window.showWarningMessage(
                 vscode.l10n.t('Failed to load config.json. It will be created or overwritten automatically when it\'s used.')
             );

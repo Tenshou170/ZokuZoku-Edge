@@ -4,7 +4,8 @@ import type { StoryEditorConfig } from "../sharedTypes";
 export function makeContentDisplayValue(
     value: string | null, lineWidth: number, config: StoryEditorConfig | null, readonly: boolean
 ) {
-    return !readonly && config?.noWrap === false && config.lineWidthMultiplier ?
-        wrapText(value ?? "", lineWidth, config.lineWidthMultiplier).join("\n") :
-        value ?? "";
+    const val = value?.replace(/\\n/g, "\n") ?? "";
+    return config?.noWrap === false && config.lineWidthMultiplier ?
+        wrapText(val, lineWidth, config.lineWidthMultiplier).join("\n") :
+        val;
 }

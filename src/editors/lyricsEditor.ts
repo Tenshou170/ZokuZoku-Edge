@@ -10,6 +10,7 @@ import { extractLyricsData } from '../pythonBridge';
 import config from '../config';
 import SQLite from '../sqlite';
 import { resolve as resolvePath } from 'path';
+import { invalidateStatusCache } from '../core/utils';
 
 export class LyricsEditorProvider extends EditorBase implements vscode.CustomTextEditorProvider {
     static readonly viewType = 'zokuzoku.lyricsEditor';
@@ -20,7 +21,6 @@ export class LyricsEditorProvider extends EditorBase implements vscode.CustomTex
     }
 
     resolveCustomTextEditor(document: vscode.TextDocument, webviewPanel: vscode.WebviewPanel, _token: vscode.CancellationToken) {
-        // Json document setup
         const json = new JsonDocument<{[key: string]: string} | null>(document.uri, null, () => {
             const subscribedKey = this.subscribedPath[0];
             const content = getDictValue(subscribedKey);
@@ -49,11 +49,9 @@ export class LyricsEditorProvider extends EditorBase implements vscode.CustomTex
                 valueNode.value;
         }
         
-        // Init webview
         const panelDisposables = this.setupWebview(webviewPanel);
         panelDisposables.push(json);
 
-        // Messaging setup
         function postMessage(message: ControllerMessage) {
             webviewPanel.webview.postMessage(message);
         }
@@ -67,7 +65,6 @@ export class LyricsEditorProvider extends EditorBase implements vscode.CustomTex
                         type: "setExplorerTitle",
                         title: vscode.l10n.t('Lyrics')
                     });
-                    // Just making sure to prevent data races
                     initReadPromise.finally(() => {
                         nodesPromise.then(nodes => {
                             postMessage({ type: "setNodes", nodes });
@@ -102,7 +99,6 @@ export class LyricsEditorProvider extends EditorBase implements vscode.CustomTex
                     const key = message.entryPath[0];
                     if (typeof key !== "string") { break; }
 
-                    // Wait for previous edit to finish before applying another
                     prevEditPromise = prevEditPromise.then(async () => {
                         try {
                             const applied = await json.applyEdit(
@@ -121,7 +117,38 @@ export class LyricsEditorProvider extends EditorBase implements vscode.CustomTex
                     break;
                 }
             }
+            panelDisposables.push(new vscode.Disposable(async () => {
+            try {
+                // Check if file still exists
+                try {
+                    await vscode.workspace.fs.stat(document.uri);
+                } catch {
+                    return;
+                }
+
+                const text = document.getText();
+                let shouldDelete = false;
+
+                if (!text.trim()) {
+                    shouldDelete = true;
+                } else {
+                    try {
+                        const data = JSON.parse(text);
+                        if (data && typeof data === 'object' && Object.keys(data).length === 0) {
+                            shouldDelete = true;
+                        }
+                    } catch {}
+                }
+
+                if (shouldDelete) {
+                    await vscode.workspace.fs.delete(document.uri);
+                    invalidateStatusCache(document.uri);
+                }
+            } catch (e) {
+                console.warn(`Failed to cleanup ghost file ${document.uri}: ${e}`);
+            }
         }));
+    }));
     }
 
     static async generateNodes(uri: vscode.Uri): Promise<ITreeNode[]> {
@@ -158,12 +185,13 @@ export class LyricsEditorProvider extends EditorBase implements vscode.CustomTex
         const lyricsData = await extractLyricsData({
             assetPath: absoluteAssetPath,
             assetName: lyricsAssetName,
-            useDecryption: useDecryption,
+            useDecryption: !!useDecryption,
             metaPath: absoluteMetaPath,
             bundleHash: hash,
             metaKey: metaKey
         });
 
+        // @ts-ignore
         const data: [string, string][] = parseCsv(lyricsData.csv_data, {
             encoding: "utf8", from: 2, relax_column_count_more: true,
             skip_empty_lines: true

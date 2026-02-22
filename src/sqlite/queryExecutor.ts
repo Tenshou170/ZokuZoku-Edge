@@ -14,11 +14,6 @@ export function executeQuery(sqlite3: string, dbPath: string, query: string, opt
         return Promise.reject(new Error(`Unable to execute query: SQLite command is not valid: '${sqlite3}'`));
     }
 
-    /*
-    logger.debug(`SQLite3 command: '${sqlite3}'`);
-    logger.debug(`Database path: '${dbPath}'`);
-    logger.debug(`Query: ${query}`);
-    */
 
     // extract the statements from the query
     let statements: Statement[];
@@ -28,10 +23,6 @@ export function executeQuery(sqlite3: string, dbPath: string, query: string, opt
         return Promise.reject(`Unable to execute query: ${(err as Error).message}`);
     }
 
-    /*
-    logger.debug(`Query execution options: ${JSON.stringify(options)}`);
-    logger.debug(`Statements: ${JSON.stringify(statements)}`);
-    */
 
     const resultSet: ResultSet = [];
     let error: Error | undefined;
