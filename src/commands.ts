@@ -130,7 +130,7 @@ const COMMANDS: CommandTree = {
                     await automation.runAll();
                 }
                 catch (e) {
-                    vscode.window.showErrorMessage("" + e);
+                    vscode.window.showErrorMessage(e instanceof Error ? e.message : String(e));
                 }
             });
         },
@@ -148,7 +148,7 @@ const COMMANDS: CommandTree = {
                         await automation.run(filename);
                     }
                     catch (e) {
-                        vscode.window.showErrorMessage("" + e);
+                        vscode.window.showErrorMessage(e instanceof Error ? e.message : String(e));
                     }
                 });
             }
@@ -171,8 +171,8 @@ const COMMANDS: CommandTree = {
 
         hachimi: {
             reloadLocalizedData() {
-                HachimiIpc.callWithProgress({ type: "ReloadLocalizedData" }).catch(e => {
-                    vscode.window.showErrorMessage("" + e);
+                HachimiIpc.callWithProgress({ type: "ReloadLocalizedData" }).catch((e: Error) => {
+                    vscode.window.showErrorMessage(e.message);
                 });
             },
             softReset() {
@@ -180,13 +180,13 @@ const COMMANDS: CommandTree = {
                      vscode.l10n.t("Are you sure you want to soft reset the game?"),
                      { modal: true },
                      vscode.l10n.t("Yes")
-                 ).then(start => {
+                  ).then((start: string | undefined) => {
                      if (start === vscode.l10n.t("Yes")) {
-                         HachimiIpc.callWithProgress({ type: "SoftReset", exec: true }).catch(e => {
-                             vscode.window.showErrorMessage("" + e);
+                         HachimiIpc.callWithProgress({ type: "SoftReset", exec: true }).catch((e: Error) => {
+                             vscode.window.showErrorMessage(e.message);
                          });
                      }
-                 });
+                  });
              },
              setLocalizedDataDir() {
                 const localizedDataDir = LocalizedDataManager.instance?.dirUri.fsPath;
@@ -219,8 +219,8 @@ const COMMANDS: CommandTree = {
                         );
                     }
                 })
-                .catch(e => {
-                    vscode.window.showErrorMessage("" + e);
+                .catch((e: Error) => {
+                    vscode.window.showErrorMessage(e.message);
                 });
             },
             revertLocalizedDataDir() {
@@ -263,8 +263,8 @@ const COMMANDS: CommandTree = {
                         );
                     }
                 })
-                .catch(e => {
-                    vscode.window.showErrorMessage("" + e);
+                .catch((e: Error) => {
+                    vscode.window.showErrorMessage(e.message);
                 });
             }
         },

@@ -1,9 +1,10 @@
 import { spawn } from 'child_process';
 import os from 'os';
 import path from 'path';
-import { PYMPORT_DIR, PYTHON_PACKAGES_DIR } from './defines';
+import { PYMPORT_DIR } from './defines';
 import { ResultSet } from './sqlite/common';
 import SQLite from './sqlite';
+import { getPythonEnvironment } from './core/env';
 
 export interface StoryChoiceData {
     text: string;
@@ -52,24 +53,7 @@ async function execute<T>(command: string, params: object): Promise<T> {
     const paramsJson = JSON.stringify(params);
 
     return new Promise((resolve, reject) => {
-        const env: any = { 
-            ...process.env, 
-            PYTHONHOME: PYMPORT_DIR,
-            SSL_CERT_FILE: path.join(PYMPORT_DIR, 'cacert.pem'),
-        };
-
-        const oldPythonPath = process.env.PYTHONPATH;
-        env.PYTHONPATH = oldPythonPath 
-            ? `${PYTHON_PACKAGES_DIR}${path.delimiter}${oldPythonPath}` 
-            : PYTHON_PACKAGES_DIR;
-    
-        if (os.platform() === 'linux') {
-            const libDir = path.join(PYMPORT_DIR, 'lib');
-            env.LD_LIBRARY_PATH = env.LD_LIBRARY_PATH ? `${libDir}:${env.LD_LIBRARY_PATH}` : libDir;
-            env.OPENSSL_CONF = '/dev/null';
-        } else if (os.platform() === 'win32') {
-            env.PATH = env.PATH ? `${PYMPORT_DIR};${env.PATH}` : PYMPORT_DIR;
-        }
+        const env = getPythonEnvironment();
     
         const childProcess = spawn(pythonExecutable, [
             '-u',
@@ -81,22 +65,22 @@ async function execute<T>(command: string, params: object): Promise<T> {
         let stdoutData = '';
         let stderrData = '';
 
-        childProcess.stdout.on('data', (data) => {
+        childProcess.stdout.on('data', (data: Buffer | string) => {
             stdoutData += data.toString();
         });
 
-        childProcess.stderr.on('data', (data) => {
+        childProcess.stderr.on('data', (data: Buffer | string) => {
             stderrData += data.toString();
         });
 
-        childProcess.on('close', (code) => {
+        childProcess.on('close', (code: number | null) => {
             if (code !== 0) {
                 return reject(new Error(`Python script exited with code ${code}. Stderr: ${stderrData}`));
             }
             try {
                 const jsonStartIndex = stdoutData.indexOf('{');
                 if (jsonStartIndex === -1) {
-                    throw new Error('No JSON object found in Python script output.');
+                    throw new Error(`No JSON object found in Python script output. Stdout: ${stdoutData}`);
                 }
 
                 const jsonString = stdoutData.substring(jsonStartIndex);
@@ -112,7 +96,7 @@ async function execute<T>(command: string, params: object): Promise<T> {
             }
         });
 
-        childProcess.on('error', (err) => {
+        childProcess.on('error', (err: Error) => {
             reject(err);
         });
     });

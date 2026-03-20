@@ -11,6 +11,7 @@ import config, { CONFIG_SECTION } from './config';
 import { setReady } from './extensionContext';
 import { ZOKUZOKU_DIR, PYMPORT_DIR, PYTHON_PACKAGES_DIR, PYMPORT_INSTALLED_FILE, PYMPORT_VER, UNITYPY_VER, APSW_VER } from "./defines";
 import SQLite from './sqlite';
+import { getPythonEnvironment, applyPythonEnvironment } from './core/env';
 
 const YES = vscode.l10n.t('Yes');
 const NO = vscode.l10n.t('No');
@@ -89,24 +90,7 @@ async function installUnityPy() {
         throw new Error(vscode.l10n.t('Python binary not found in pymport install dir'));
     }
 
-    const env: any = {
-        ...process.env,
-        PYTHONHOME: PYMPORT_DIR,
-        SSL_CERT_FILE: path.join(PYMPORT_DIR, 'cacert.pem'),
-    };
-
-    const oldPythonPath = process.env.PYTHONPATH;
-    env.PYTHONPATH = oldPythonPath 
-        ? `${PYTHON_PACKAGES_DIR}${path.delimiter}${oldPythonPath}` 
-        : PYTHON_PACKAGES_DIR;
-
-    if (os.platform() === 'linux') {
-        const libDir = path.join(PYMPORT_DIR, 'lib');
-        env.LD_LIBRARY_PATH = env.LD_LIBRARY_PATH ? `${libDir}:${env.LD_LIBRARY_PATH}` : libDir;
-        env.OPENSSL_CONF = '/dev/null';
-    } else if (os.platform() === 'win32') {
-        env.PATH = env.PATH ? `${PYMPORT_DIR};${env.PATH}` : PYMPORT_DIR;
-    }
+    const env = getPythonEnvironment();
 
     const pip = spawn(python, ['-m', 'pip', 'install', '--target', PYTHON_PACKAGES_DIR, 'UnityPy==' + UNITYPY_VER, 'apsw-sqlite3mc==' + APSW_VER, '--force-reinstall'], {
         stdio: 'inherit',
@@ -119,10 +103,10 @@ async function installUnityPy() {
     };
     await vscode.window.withProgress(progressOptions, () => {
         return new Promise<void>((resolve, reject) => {
-            pip.on("error", e => {
+            pip.on("error", (e: Error) => {
                 reject(e);
             })
-                .on("exit", code => {
+                .on("exit", (code: number | null) => {
                     if (code === 0) {
                         resolve();
                         return;
@@ -241,7 +225,7 @@ async function checkEnabled() {
             vscode.l10n.t('Would you like to enable ZokuZoku for this workspace?'),
             YES, NO
         )
-            .then(res => {
+            .then((res: string | undefined) => {
                 if (res === YES) {
                     config().update("enabled", true, false);
                     setActive(true);
@@ -252,31 +236,7 @@ async function checkEnabled() {
 
 
 async function runInitialSetup(context: vscode.ExtensionContext) {
-    if (os.platform() === 'linux') {
-        process.env.OPENSSL_CONF = '/dev/null';
-        
-        
-        const libDir = path.join(PYMPORT_DIR, 'lib');
-        process.env.LD_LIBRARY_PATH = process.env.LD_LIBRARY_PATH 
-            ? `${libDir}:${process.env.LD_LIBRARY_PATH}` 
-            : libDir;
-    } else if (os.platform() === 'win32') {
-        process.env.PATH = process.env.PATH
-            ? `${PYMPORT_DIR};${process.env.PATH}`
-            : PYMPORT_DIR;
-    }
-    
-    
-    process.env.PYTHONHOME = PYMPORT_DIR;
-    
-    
-    const oldPythonPath = process.env.PYTHONPATH;
-    process.env.PYTHONPATH = oldPythonPath 
-        ? `${PYTHON_PACKAGES_DIR}${path.delimiter}${oldPythonPath}` 
-        : PYTHON_PACKAGES_DIR;
-        
-    process.env.SSL_CERT_FILE = path.join(PYMPORT_DIR, 'cacert.pem');
-
+    applyPythonEnvironment();
     initPythonBridge();
 
     const pyInstalled = await checkPymport();
@@ -343,40 +303,34 @@ async function startCore(context: vscode.ExtensionContext) {
     })();
 }
 
-export async function activate(context: vscode.ExtensionContext) {
-    context.subscriptions.push(vscode.commands.registerCommand('zokuzoku.retrySetup', () => {
-        runInitialSetup(context)
-            .then(() => startCore(context))
-            .catch(err => {
-                const message = err instanceof Error ? err.message : String(err);
-                vscode.window.showErrorMessage(`ZokuZoku setup failed: ${message}`, "Retry Setup")
-                    .then(selection => {
-                        if (selection === "Retry Setup") {
-                            vscode.commands.executeCommand('zokuzoku.retrySetup');
-                        }
-                    });
-            });
-    }));
-
-    context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(async event => {
-        if (event.affectsConfiguration(CONFIG_SECTION)) {
-            SQLite.init(context.extensionPath);
-            checkEnabled();
-        }
-    }));
-
+async function tryActivate(context: vscode.ExtensionContext) {
     try {
         await runInitialSetup(context);
         await startCore(context);
     } catch (e) {
         const message = e instanceof Error ? e.message : String(e);
         vscode.window.showErrorMessage(`ZokuZoku setup failed: ${message}`, "Retry Setup")
-            .then(selection => {
+            .then((selection: string | undefined) => {
                 if (selection === "Retry Setup") {
-                    vscode.commands.executeCommand('zokuzoku.retrySetup');
+                    tryActivate(context);
                 }
             });
     }
+}
+
+export async function activate(context: vscode.ExtensionContext) {
+    context.subscriptions.push(vscode.commands.registerCommand('zokuzoku.retrySetup', () => {
+        tryActivate(context);
+    }));
+
+    context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(async (event: vscode.ConfigurationChangeEvent) => {
+        if (event.affectsConfiguration(CONFIG_SECTION)) {
+            SQLite.init(context.extensionPath);
+            checkEnabled();
+        }
+    }));
+
+    tryActivate(context);
 }
 
 export function deactivate() { }
