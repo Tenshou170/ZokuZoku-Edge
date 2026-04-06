@@ -273,24 +273,6 @@ const COMMANDS: CommandTree = {
         homeStories: { refresh: () => HomeStoriesTreeDataProvider.instance?.refresh() },
         mainStories: { refresh: () => MainStoriesTreeDataProvider.instance?.refresh() },
         lyrics:      { refresh: () => LyricsTreeDataProvider.instance?.refresh() }
-    },
-
-    undo: () => {
-        if (EditorBase.activeWebview) {
-            EditorBase.activeWebview.postMessage({ type: "undo" });
-        }
-        else {
-            vscode.commands.executeCommand("default:undo");
-        }
-    },
-
-    redo: () => {
-        if (EditorBase.activeWebview) {
-            EditorBase.activeWebview.postMessage({ type: "redo" });
-        }
-        else {
-            vscode.commands.executeCommand("default:redo");
-        }
     }
 };
 

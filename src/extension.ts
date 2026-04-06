@@ -319,10 +319,6 @@ async function tryActivate(context: vscode.ExtensionContext) {
 }
 
 export async function activate(context: vscode.ExtensionContext) {
-    context.subscriptions.push(vscode.commands.registerCommand('zokuzoku.retrySetup', () => {
-        tryActivate(context);
-    }));
-
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(async (event: vscode.ConfigurationChangeEvent) => {
         if (event.affectsConfiguration(CONFIG_SECTION)) {
             SQLite.init(context.extensionPath);
