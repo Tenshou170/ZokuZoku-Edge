@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { makeContentDisplayValue } from "./utils";
+  import { makeContentDisplayValue } from "../utils";
   import type { TreeNodeId } from "../sharedTypes";
   import { config } from "./stores";
   import ColorText from "./ColorText.svelte";
