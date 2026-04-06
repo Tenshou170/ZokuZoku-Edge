@@ -32,17 +32,19 @@ export function getEditorHtml(extensionUri: vscode.Uri, webview: vscode.Webview,
         }
     }
 
+    const nonce = getNonce();
     return `
         <!doctype html>
         <html lang="en">
         <head>
             <meta charset="UTF-8" />
+            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; font-src ${webview.cspSource} data:; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}' ${webview.cspSource}; img-src ${webview.cspSource} data: https:; connect-src ${webview.cspSource} data:;">
             <meta name="viewport" content="width=device-width, initial-scale=1.0" />
             <title>${pageTitle}</title>
-            <script>
+            <script nonce="${nonce}">
                 window.l10nContents = ${JSON.stringify(l10nContents)};
             </script>
-            <script type="module" nonce="${getNonce()}" src="${scriptUri}"></script>
+            <script type="module" nonce="${nonce}" src="${scriptUri}"></script>
             <link rel="stylesheet" href="${styleUri}">
         </head>
         <body>
