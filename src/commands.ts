@@ -5,7 +5,6 @@ import config from './config';
 import { LyricsEditorProvider } from './editors/lyricsEditor';
 import { MdbEditorProvider } from './editors/mdbEditor';
 import HachimiIpc from './core/hachimiIpc';
-import { EditorBase } from './editors/editorBase';
 import StoriesTreeDataProvider from './views/storiesTreeDataProvider';
 import HomeStoriesTreeDataProvider from './views/homeStoriesTreeDataProvider';
 import MainStoriesTreeDataProvider from './views/mainStoryTreeDataProvider';

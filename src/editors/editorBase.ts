@@ -5,7 +5,6 @@ import type { ControllerMessage, EditorMessage, TreeNodeId } from './sharedTypes
 import HachimiIpc from '../core/hachimiIpc';
 
 export class EditorBase {
-    static activeWebview: vscode.Webview | null = null;
     subscribedPath: TreeNodeId[] = [];
     protected disposables: vscode.Disposable[] = [];
 
@@ -81,15 +80,6 @@ export class EditorBase {
                     break;
             }
         }, null, panelDisposables);
-
-        webviewPanel.onDidChangeViewState(action => {
-            if (action.webviewPanel.active) {
-                EditorBase.activeWebview = action.webviewPanel.webview;
-            } else if (EditorBase.activeWebview === action.webviewPanel.webview) {
-                EditorBase.activeWebview = null;
-            }
-        }, null, panelDisposables);
-        EditorBase.activeWebview = webview;
 
         webviewPanel.onDidDispose(() => {
             while (panelDisposables.length) {
