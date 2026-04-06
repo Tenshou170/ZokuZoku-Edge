@@ -1,8 +1,9 @@
 import * as vscode from 'vscode';
 import config from '../config';
 import { dirname } from 'path';
-import type { ControllerMessage, EditorMessage, TreeNodeId } from './sharedTypes';
+import { ControllerMessage, EditorMessage, TreeNodeId } from './sharedTypes';
 import HachimiIpc from '../core/hachimiIpc';
+import { ZOKUZOKU_DIR } from '../defines';
 
 export class EditorBase {
     subscribedPath: TreeNodeId[] = [];
@@ -29,6 +30,7 @@ export class EditorBase {
             enableScripts: true,
             localResourceRoots: [
                 this.context.extensionUri,
+                vscode.Uri.file(ZOKUZOKU_DIR),
                 ...(gameDataDir ? [vscode.Uri.file(gameDataDir)] : []),
                 ...(customFont ? [vscode.Uri.file(dirname(customFont))] : []),
                 ...extraLocalResourceRoots
