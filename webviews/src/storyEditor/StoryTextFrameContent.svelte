@@ -1,5 +1,6 @@
 <script lang="ts">
     import { makeContentDisplayValue } from "../utils";
+    import type { TreeNodeId } from "../sharedTypes";
     import { config } from "./stores";
     import ColorText from "./ColorText.svelte";
 
@@ -20,10 +21,18 @@
     $: lineHeight = 1.5 * ($config?.lineSpacingMultiplier ?? 1);
 
     $: displayValue = makeContentDisplayValue(value, lineWidth, $config, readonly);
+
+    function onKeyDownInternal(e: KeyboardEvent) {
+        if (e.key === "Enter" || e.key === " ") {
+            // @ts-ignore
+            e.currentTarget.click();
+        }
+    }
 </script>
 
 <div class="content-outer">
-    <div class="content" {title} on:focus on:blur on:keydown on:mousemove on:click
+    <div class="content" {title} role="textbox" aria-readonly={readonly} tabindex="0"
+        on:focus on:blur on:keydown={onKeyDownInternal} on:keydown on:mousemove on:click
         style="font-size: {fontSize}cqh; line-height: {lineHeight};">
         <ColorText content={displayValue} translated={!readonly} />
     </div>

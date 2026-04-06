@@ -31,8 +31,11 @@
 <div
   class="content"
   {title}
+  role="button"
+  tabindex="0"
   on:focus
   on:blur
+  on:keydown={(e) => (e.key === "Enter" || e.key === " ") && e.currentTarget.click()}
   on:keydown
   on:mousemove
   on:click

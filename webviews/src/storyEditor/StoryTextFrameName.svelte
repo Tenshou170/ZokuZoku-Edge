@@ -14,7 +14,7 @@
     const _ = { readonly, multiline, link, active, placeholder };
 </script>
 
-<div class="name" {title} on:focus on:blur on:keydown on:mousemove on:click>{value ?? ""}</div>
+<div class="name" {title} role="button" tabindex="0" on:focus on:blur on:keydown={(e) => (e.key === "Enter" || e.key === " ") && e.currentTarget.click()} on:keydown on:mousemove on:click>{value ?? ""}</div>
 <div class="name-bg"></div>
 
 <style>

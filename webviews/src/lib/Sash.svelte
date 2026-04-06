@@ -41,7 +41,10 @@
     }
 </script>
 
-<div class="sash" class:horizontal class:left class:top on:mousedown={onMouseDown} on:mouseup={onMouseUp}>
+<div class="sash" role="separator" tabindex="0"
+    aria-orientation={horizontal ? "horizontal" : "vertical"}
+    aria-valuenow={size} aria-valuemin={minSize} aria-valuemax={maxSize}
+    class:horizontal class:left class:top on:mousedown={onMouseDown} on:mouseup={onMouseUp}>
     
 </div>
 

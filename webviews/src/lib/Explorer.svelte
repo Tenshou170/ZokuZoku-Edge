@@ -356,27 +356,28 @@
     <div class="search-container">
         <div class="search-box-container">
             <InputBox placeholder={l10n.t("Search")} bind:value={searchQuery} />
-            <div class="search-expand-btn" on:click={onSearchOptionsToggle}>
+            <div class="search-expand-btn" role="button" tabindex="0" title={searchOptionsOpen ? l10n.t("Hide Search Options") : l10n.t("Show Search Options")}
+                on:click={onSearchOptionsToggle} on:keydown={(e) => (e.key === "Enter" || e.key === " ") && onSearchOptionsToggle()}>
                 <div class="codicon codicon-{searchExpandIcon}"></div>
             </div>
         </div>
         {#if searchOptionsOpen}
-            <div class="search-options">
-                <div><input type="checkbox" bind:checked={searchOptions.caseSensitive}>{l10n.t("Case sensitive")}</div>
-                <div><input type="checkbox" bind:checked={searchOptions.regex}>{l10n.t("Use regular expression")}</div>
-                <div><input type="checkbox" bind:checked={searchOptions.searchInContent}>{l10n.t("Search in content")}</div>
-                <div><input type="checkbox" bind:checked={searchOptions.excludeCategoryNames}>{l10n.t("Exclude category names")}</div>
+            <div class="search-options" role="group" aria-label={l10n.t("Search Options")}>
+                <div><input type="checkbox" id="caseSensitive" bind:checked={searchOptions.caseSensitive}><label for="caseSensitive">{l10n.t("Case sensitive")}</label></div>
+                <div><input type="checkbox" id="regex" bind:checked={searchOptions.regex}><label for="regex">{l10n.t("Use regular expression")}</label></div>
+                <div><input type="checkbox" id="searchInContent" bind:checked={searchOptions.searchInContent}><label for="searchInContent">{l10n.t("Search in content")}</label></div>
+                <div><input type="checkbox" id="excludeCategoryNames" bind:checked={searchOptions.excludeCategoryNames}><label for="excludeCategoryNames">{l10n.t("Exclude category names")}</label></div>
             </div>
         {/if}
     </div>
     <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-    <div class="tree-view" style={searchQuery ? "display: none;" : null} tabindex="0" bind:this={treeView} on:scroll={onScroll} on:mousemove={onMouseMove} on:mouseup={onMouseUp} on:keydown={onKeyDown}>
+    <div class="tree-view" role="tree" style={searchQuery ? "display: none;" : null} tabindex="0" bind:this={treeView} on:scroll={onScroll} on:mousemove={onMouseMove} on:mouseup={onMouseUp} on:keydown={onKeyDown}>
         {#each nodes as node}
             <TreeNode {node} siblings={nodes} {hideExists} />
         {/each}
     </div>
     {#if searchQuery}
-        <div class="tree-view" on:mousemove={onMouseMove} on:mouseup={onMouseUp}>
+        <div class="tree-view" role="tree" tabindex="0" on:mousemove={onMouseMove} on:mouseup={onMouseUp}>
             {#if searchWorker}
                 <div class="searching-label">{l10n.t("Searching...")}</div>
             {/if}

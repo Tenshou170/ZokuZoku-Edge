@@ -94,13 +94,15 @@
         return true;
     }
 
-    function onClick(e: PointerEvent) {
+    function onClick(e: MouseEvent | KeyboardEvent) {
         if (!nodeOnSelect(!e.ctrlKey)) {
             return;
         }
 
         let justFocused = false;
-        if (focus) e.stopPropagation();
+        if (focus) {
+            if (typeof e.stopPropagation === 'function') e.stopPropagation();
+        }
         else justFocused = true;
         focus = true;
         open = !open;
@@ -169,7 +171,13 @@
             class="tree-node" class:focus class:noContent
             class:selected={pathStr in $selectedNodes}
             class:copying={pathStr in $copyingNodes}
-            title={pathStr} on:click={onClick} on:click
+            role="treeitem"
+            tabindex="0"
+            aria-selected={pathStr in $selectedNodes}
+            aria-expanded={node.type == "category" ? open : undefined}
+            title={pathStr} 
+            on:click={onClick} on:click
+            on:keydown={(e) => (e.key === "Enter" || e.key === " ") && onClick(e)}
             on:mousemove={onMouseMove}
         >
             {#if selectionIndex !== null}
