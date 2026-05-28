@@ -268,6 +268,7 @@ async function runInitialSetup(context: vscode.ExtensionContext) {
 }
 
 let coreDisposable: vscode.Disposable | undefined;
+let activeScanSessionId = 0;
 
 async function startCore(context: vscode.ExtensionContext) {
     if (coreDisposable) {
@@ -287,6 +288,8 @@ async function startCore(context: vscode.ExtensionContext) {
     coreDisposable = vscode.Disposable.from(...disposables);
     context.subscriptions.push(coreDisposable);
 
+    const scanSessionId = ++activeScanSessionId;
+
     // Background scanner to warm up status cache
     (async () => {
         const patterns = [
@@ -295,8 +298,10 @@ async function startCore(context: vscode.ExtensionContext) {
             '**/race/storyrace/**/*.json'
         ];
         for (const pattern of patterns) {
+            if (scanSessionId !== activeScanSessionId) { return; }
             const uris = await vscode.workspace.findFiles(pattern);
             for (const uri of uris) {
+                if (scanSessionId !== activeScanSessionId) { return; }
                 await getEntryStatus(uri);
             }
         }

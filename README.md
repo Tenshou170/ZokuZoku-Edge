@@ -1,39 +1,87 @@
-<img align="left" width="80" height="80" src="assets/icon.png">
+<div align="center">
+  <img src="assets/icon.png" width="128" height="128" alt="ZokuZoku Edge Logo">
+  <h1>ZokuZoku Edge</h1>
+  <p><b>The ultimate high-performance translation toolkit for the Hachimi translation modding ecosystem.</b></p>
+  
+  <p>
+    <a href="https://github.com/Tenshou170/ZokuZoku-Edge/releases"><img src="https://img.shields.io/github/v/release/Tenshou170/ZokuZoku-Edge?color=brightgreen&logo=github&style=for-the-badge" alt="Latest Release"></a>
+    <a href="https://code.visualstudio.com/"><img src="https://img.shields.io/badge/VS_Code-1.96+-007ACC?logo=visual-studio-code&logoColor=white&style=for-the-badge" alt="VS Code Version"></a>
+    <a href="https://svelte.dev/"><img src="https://img.shields.io/badge/Svelte-4.x-FF3E00?logo=svelte&logoColor=white&style=for-the-badge" alt="Svelte Framework"></a>
+  </p>
+  <p>
+    <a href="https://pnpm.io/"><img src="https://img.shields.io/badge/pnpm-Enabled-F69220?logo=pnpm&logoColor=white&style=flat-square" alt="pnpm"></a>
+    <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white&style=flat-square" alt="TypeScript"></a>
+    <a href="https://www.rust-lang.org/"><img src="https://img.shields.io/badge/Rust%20WASM-Core-000000?logo=rust&logoColor=white&style=flat-square" alt="Rust WASM"></a>
+    <a href="https://github.com/Tenshou170/ZokuZoku-Edge/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-GPL%20v3-blue.svg?style=flat-square" alt="License"></a>
+  </p>
+</div>
 
-# ZokuZoku Edge
-ZokuZoku Edge is a Visual Studio Code extension which acts as the main translation tool for Hachimi. It provides a number of custom editors that are specialized for editing the various JSON dict formats that Hachimi uses, allowing translators to work on translations without having to edit the JSON file directly.
+---
 
-## Features
-- **Easy Installation:** Guided setup process directly within VSCode—no command line required.
-- **Dynamic Asset Handling:** Real-time data generation removes the need for manual preprocessing, patching, or separate data downloads.
-- **Intuitive Interface:** Assets organized in logical tree views with custom editors that provide a familiar VSCode-native experience.
-- **Optimized Story Editing:** Features accurate story previews and Hachimi's auto-wrapping system to ensure translations fit perfectly in-game.
-- **Integrated Workflow:** Leverages VSCode's power, including built-in Git integration and a robust environment for collaborative translation.
+**ZokuZoku Edge** is a state-of-the-art Visual Studio Code extension built specifically to accelerate and streamline asset localizations in **UM:PD**. It provides specialized, high-fidelity visual editors and seamless workflows so translators can focus on the content and maintain absolute visual precision.
 
-## Installation
-Download the .vsix file for the latest version on the [Releases](https://github.com/THShafi170/ZokuZoku-Edge/releases) page. To install it, open the Extensions panel in VSCode, click on the 3 dots button on the top right, choose "Install from VSIX..." and select the file you just downloaded.
+---
+
+## ✨ Key Features
+
+- 🎨 **Svelte-Powered Visual Editors**: Built-in, high-fidelity visual editors for live lyrics (`m*_lyrics.json`), story timelines, and text databases (`text_data.json`) designed to mimic actual game rendering.
+- ⚡ **Tag-Aware Text Wrapping**: Native Rust WebAssembly (`hachimi_lib`) handles layout, character segmentation, and styling tag limits perfectly inside Svelte webviews.
+- 📂 **Intuitive Navigation**: Organizes translatable assets into logical tree views, making it easy to find, preview, and edit files without touching raw JSON.
+- 🔄 **Dynamic Asset Handling**: Real-time data generation removes the need for manual preprocessing, patching, or separate data downloads.
+- ⌨️ **Streamlined Collaborative Workflow**: Fully integrated with VS Code's native features, including Git/source control, keyboard shortcuts, and theme compatibility.
+
+---
+
+## 📚 Documentation & Guides
+
+Learn how to customize, extend, or use ZokuZoku:
+
+- 📖 **[Translation Guide](https://hachimi.noccu.art/docs/translation-guide/using-zokuzoku)**: Step-by-step localization walkthrough and community instructions.
+
+---
+
+## 📦 Installation & Setup
+
+1. Download the latest compiled `.vsix` bundle from the [Releases](https://github.com/Tenshou170/ZokuZoku-Edge/releases) page.
+2. Open the **Extensions** panel in VS Code (`Ctrl+Shift+X`).
+3. Click the menu icon (`...`) in the top right, select **Install from VSIX...**, and select the downloaded file.
 
 ### Prerequisites
-- **Supported Operating Systems:** Windows 10+ or Linux x64. macOS is not officially supported but might work with some special setup.
-- **Recommended Python Version:** Python 3.10 or later.
-- **SQLite 3:** Ensure `sqlite3` is installed and accessible in your system's PATH.
-- **Visual Studio Code:** v1.96 or later.
-- **UM:PD Game Files:**
-    - JP Client: Installed through either DMM or Steam.
-    - EN Client: Installed from Steam.
-    - Android: Game files from either the JP or EN versions.
 
-## Getting started
-Follow the usage guide from [here](https://hachimi.noccu.art/docs/translation-guide/using-zokuzoku).
+| Component            | Requirement                                                        |
+| :------------------- | :----------------------------------------------------------------- |
+| **OS**               | Windows 10+ / Linux x64                                            |
+| **VS Code**          | v1.96 or later                                                     |
+| **SQLite 3**         | Ensure `sqlite3` is installed and accessible in your system's PATH |
+| **UM:PD Game Files** | JP Client (DMM/Steam), EN Client (Steam), or Android game files    |
 
-## Development
+> [!TIP]
+> **Zero-Config Python Management**: ZokuZoku Edge automatically manages its own sandboxed Python environment (`~/.zokuzoku/pymport`) complete with pre-compiled game intelligence dependencies like `UnityPy` via `pymport`. You do not need to install Python manually!
+
+---
+
+## 🛠️ Development & Building
+
 ⚠️ **Please use the pnpm package manager while working on this project.**
 
-To get started, install the dependencies in the root directory and also the `webviews` directory, as there are two separate project trees: one for the extension part, and the other for the editors. There's also another project located in `externals/criCodecs` which contains the source code for the CRI audio decoder native module.
+To run ZokuZoku Edge locally:
 
-ZokuZoku Edge uses a special Python installation for Node.js called [`pymport`](https://github.com/mmomtchev/pymport), and in development mode, it looks for Python modules in its own directory. To install the required dependencies, instead of following the usual setup procedure, run `npx pympip3 install UnityPy==1.10.18`.
+```bash
+# 1. Clone the repository and install dev dependencies
+pnpm install
 
-After that, you can work on the project just like you would with any other VSCode extension.
+# 2. Build the Svelte Webview assets
+cd webviews && pnpm install && pnpm run build
+cd ..
 
-## License
-[GNU GPLv3](LICENSE)
+# 3. Compile the main VS Code Extension host
+pnpm run compile
+```
+
+Press `F5` in VS Code to launch the Extension Development Host and begin debugging.
+
+---
+
+## ⚖️ License
+
+Distributed under the **GNU GPLv3** License. See the [LICENSE](LICENSE) file for details.

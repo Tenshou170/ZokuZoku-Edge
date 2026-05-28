@@ -1,12 +1,12 @@
 {
   "name": "zokuzoku-edge",
   "displayName": "%extension.displayName%",
-  "publisher": "THShafi170",
+  "publisher": "Tenshou170",
   "description": "%extension.description%",
   "repository": {
-    "url": "https://github.com/THShafi170/ZokuZoku-Edge"
+    "url": "https://github.com/Tenshou170/ZokuZoku-Edge"
   },
-  "version": "1.1.4",
+  "version": "1.1.5",
   "engines": {
     "vscode": "^1.96.0",
     "node": ">=22"

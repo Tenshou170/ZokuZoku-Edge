@@ -422,7 +422,7 @@ export class JsonDocument<T> extends vscode.Disposable {
 
         const res = await vscode.workspace.applyEdit(this.makeEdit(data));
         if (options.save) {
-            document!.save();
+            await document!.save();
         }
         return res;
     }

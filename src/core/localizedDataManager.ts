@@ -1,5 +1,7 @@
 import * as vscode from 'vscode';
 import { JsonDocument, type JsonEdit } from './jsonDocument';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export interface LocalizedDataConfig {
     localize_dict?: string,
@@ -56,7 +58,17 @@ export class LocalizedDataManager {
     configJson: JsonDocument<LocalizedDataConfig>;
 
     private constructor() {
-        const folderUri = vscode.workspace.workspaceFolders?.[0]?.uri;
+        let folderUri = vscode.workspace.workspaceFolders?.[0]?.uri;
+        if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 1) {
+            for (const folder of vscode.workspace.workspaceFolders) {
+                const checkPath = path.join(folder.uri.fsPath, "localized_data");
+                if (fs.existsSync(checkPath)) {
+                    folderUri = folder.uri;
+                    break;
+                }
+            }
+        }
+
         if (!folderUri) {
             throw new Error(vscode.l10n.t('No workspace folder.'));
         }

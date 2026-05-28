@@ -41,6 +41,9 @@
     }
 </script>
 
+<!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+<!-- svelte-ignore a11y-no-static-element-interactions -->
+<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
 <div class="sash" role="separator" tabindex="0"
     aria-orientation={horizontal ? "horizontal" : "vertical"}
     aria-valuenow={size} aria-valuemin={minSize} aria-valuemax={maxSize}

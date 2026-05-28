@@ -65,7 +65,8 @@ async function downloadToFile(url: string | URL, title: string, filePath: fs.Pat
         }
     }
     catch (e) {
-        await fsPromises.unlink(filePath);
+        file.destroy();
+        await fsPromises.unlink(filePath).catch(() => {});
         console.error(`${e}`);
         throw e;
     }

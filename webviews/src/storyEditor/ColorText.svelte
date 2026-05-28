@@ -45,6 +45,8 @@
     color?: string;
     italic?: boolean;
     bold?: boolean;
+    isTemplate?: boolean;
+    isLayoutFilter?: boolean;
   }
 
   function makeDisplay(content: string, colorTextList: string[]) {
@@ -90,7 +92,30 @@
         continue;
       }
 
-      // 2. Handle Tags
+      // 2. Handle Template Expressions
+      if (content.startsWith("$(", i)) {
+        pushCurrent(false);
+        const end = content.indexOf(")", i);
+        if (end !== -1) {
+          const expr = content.substring(i, end + 1);
+          const filterName = content.substring(i + 2, end).trim().split(" ")[0];
+          const isLayoutFilter = ["nb", "anchor", "scale", "ho", "vo", "ls", "ub", "bf", "bestfit", "min", "max", "oob"].includes(filterName);
+          res.push({
+            chunk: expr,
+            isColorText: false,
+            size,
+            color: activeColors[activeColors.length - 1],
+            italic,
+            bold,
+            isTemplate: true,
+            isLayoutFilter
+          });
+          i = end + 1;
+          continue;
+        }
+      }
+
+      // 3. Handle Tags
       if (content.startsWith("<size=", i)) {
         pushCurrent(false);
         const end = content.indexOf(">", i);
@@ -163,20 +188,41 @@
 
 <svelte:window on:message={onMessage} />
 
-{#each display as { chunk, isColorText, size, color, italic, bold }}
-  <span
-    class:color-text={isColorText && !color}
-    style:font-size={size != null ? `${size}cqh` : undefined}
-    style:font-style={italic ? "italic" : undefined}
-    style:color={color ? color : undefined}
-    style:font-weight={bold ? "800" : undefined}
-    style:text-shadow={bold ? "0.4px 0px 0px currentColor" : undefined}
-    >{chunk}</span
-  >
+{#each display as { chunk, isColorText, size, color, italic, bold, isTemplate, isLayoutFilter }}
+  {#if isTemplate}
+    {#if !isLayoutFilter}
+      <span
+        class="template-var"
+        style:font-size={size != null ? `${size}cqh` : undefined}
+        style:font-style={italic ? "italic" : undefined}
+        style:color={color ? color : undefined}
+        style:font-weight={bold ? "800" : undefined}
+        style:text-shadow={bold ? "0.4px 0px 0px currentColor" : undefined}
+        >{chunk}</span
+      >
+    {/if}
+  {:else}
+    <span
+      class:color-text={isColorText && !color}
+      style:font-size={size != null ? `${size}cqh` : undefined}
+      style:font-style={italic ? "italic" : undefined}
+      style:color={color ? color : undefined}
+      style:font-weight={bold ? "800" : undefined}
+      style:text-shadow={bold ? "0.4px 0px 0px currentColor" : undefined}
+      >{chunk}</span
+    >
+  {/if}
 {/each}
 
 <style>
   .color-text {
     color: #ff911c;
+  }
+  .template-var {
+    color: #4fc3f7;
+    background: rgba(79, 195, 247, 0.15);
+    border-radius: 3px;
+    padding: 0 3px;
+    font-weight: 500;
   }
 </style>

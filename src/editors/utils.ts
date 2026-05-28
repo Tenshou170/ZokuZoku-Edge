@@ -38,7 +38,7 @@ export function getEditorHtml(extensionUri: vscode.Uri, webview: vscode.Webview,
         <html lang="en">
         <head>
             <meta charset="UTF-8" />
-            <meta http-equiv="Content-Security-Policy" content="default-src 'none'; font-src ${webview.cspSource} data:; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}' ${webview.cspSource} 'unsafe-eval'; img-src ${webview.cspSource} data: https:; connect-src ${webview.cspSource} data:; media-src ${webview.cspSource} https:;">
+            <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob: ${webview.cspSource}; script-src * 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' data: blob: ${webview.cspSource}; style-src * 'unsafe-inline' data: blob: ${webview.cspSource}; img-src * data: blob: ${webview.cspSource}; media-src * data: blob: ${webview.cspSource}; connect-src * data: blob: ${webview.cspSource}; font-src * data: blob: ${webview.cspSource}; worker-src * data: blob: ${webview.cspSource};">
             <meta name="viewport" content="width=device-width, initial-scale=1.0" />
             <title>${pageTitle}</title>
             <script nonce="${nonce}">

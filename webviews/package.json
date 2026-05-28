@@ -24,7 +24,7 @@
   "dependencies": {
     "@vscode/codicons": "^0.0.35",
     "@vscode/l10n": "^0.0.18",
-    "hachimi_lib": "github:Hachimi-Hachimi/hachimi_lib_js#823f1f018d3791d45a0d77cbc64acc3d1f35baf8",
+    "hachimi_lib": "github:Tenshou170/hachimi_lib_js#903bde24e3b4647c627ff957324d0ad3a6e1bc0d",
     "svelte-intersection-observer": "^1.0.0"
   }
 }
