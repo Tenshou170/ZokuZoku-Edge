@@ -29,7 +29,8 @@
 </script>
 
 <main>
-  <Explorer {extraActions} />
+  <!-- The auto-generated "title" slot is never translated, so exclude it from progress -->
+  <Explorer {extraActions} progressExcludeIds={new Set(["title"])} />
   <Editor inner={EditorInner} />
 </main>
 

@@ -48,3 +48,4 @@ export const currentNav = writable<{
     prev?: TreeNodeId
 }>({});
 export const currentSiblings = writable<ITreeNode[]>([]);
+export const tlProgress = writable<number>(0);

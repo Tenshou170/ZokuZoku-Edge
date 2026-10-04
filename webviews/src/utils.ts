@@ -1,5 +1,5 @@
 import { wrapText } from "hachimi_lib";
-import type { ControllerMessage, ITextSlot, ITreeNode, StoryEditorConfig, TreeNodeId } from "./sharedTypes";
+import type { ControllerMessage, IEntryTreeNode, ITextSlot, ITreeNode, StoryEditorConfig, TreeNodeId } from "./sharedTypes";
 import { currentNav, currentPath, currentTextSlots, selectedNodes } from "./stores";
 import { vscode } from "./vscode";
 
@@ -91,4 +91,105 @@ export function highlightTags(text: string | null): string {
         /(&lt;\/?[a-zA-Z_][\w]*(?:\s*=\s*[^&<>]*)?\&gt;|\\n|\\\\n)/g,
         '<span class="tag-highlight">$1</span>',
     );
+}
+
+export function isNodeFullyFilled(
+    node: IEntryTreeNode,
+    translations: string[] | undefined,
+): boolean {
+    if (!translations || !node.content || node.content.length === 0) {
+        return false;
+    }
+    for (let i = 0; i < node.content.length; i++) {
+        const slot = node.content[i];
+        const original = slot?.content;
+        if (original && original.trim().length > 0) {
+            const tl = translations[i];
+            if (!tl || tl.trim().length === 0) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+/**
+ * Percentage of translatable slots that have a non-empty translation.
+ * Only slots whose original text is non-empty count towards the total.
+ */
+export function computeProgress(
+    nodes: ITreeNode[],
+    translationMap: { [pathStr: string]: string[] },
+    excludeIds?: Set<string>,
+): number {
+    const entryList: { node: IEntryTreeNode, pathStr: string }[] = [];
+    function collect(list: ITreeNode[], parentPath: string[] = []) {
+        for (const n of list) {
+            const currentPath = [...parentPath, String(n.id)];
+            if (n.type === "entry") {
+                if (!excludeIds || !excludeIds.has(String(n.id))) {
+                    entryList.push({ node: n, pathStr: currentPath.join("/") });
+                }
+            } else if (n.type === "category") {
+                collect(n.children, currentPath);
+            }
+        }
+    }
+    collect(nodes);
+
+    if (entryList.length === 0) {
+        return 0;
+    }
+
+    let totalSlots = 0;
+    let filledSlots = 0;
+
+    for (const { node, pathStr } of entryList) {
+        const translations = translationMap[pathStr] || translationMap[node.id.toString()];
+        if (!node.content) continue;
+
+        for (let i = 0; i < node.content.length; i++) {
+            const slot = node.content[i];
+            const original = slot?.content;
+            if (original && original.trim().length > 0) {
+                totalSlots++;
+                const tl = translations?.[i];
+                if (tl && tl.trim().length > 0) {
+                    filledSlots++;
+                }
+            }
+        }
+    }
+
+    if (totalSlots === 0) {
+        return 0;
+    }
+
+    return Math.round((filledSlots / totalSlots) * 100);
+}
+
+/**
+ * Snapshots the currently focused editor's input values into the translation
+ * map so progress stays accurate for text typed but not yet round-tripped
+ * through the extension host.
+ */
+export function updateTranslationsFromDOM(
+    path: TreeNodeId[] | undefined,
+    translationMap: { [pathStr: string]: string[] },
+): boolean {
+    if (!path || path.length === 0) return false;
+    const pathStr = path.join("/");
+    const elements = document.querySelectorAll<
+        HTMLInputElement | HTMLTextAreaElement
+    >("input:not([readonly]), textarea:not([readonly])");
+    if (elements.length > 0) {
+        if (!translationMap[pathStr]) {
+            translationMap[pathStr] = [];
+        }
+        elements.forEach((el, idx) => {
+            translationMap[pathStr][idx] = el.value;
+        });
+        return true;
+    }
+    return false;
 }

@@ -6,12 +6,14 @@
     import InputBox from "./InputBox.svelte";
     import type { SearchOptions, SearchRequest, SearchResponse } from "../treeSearchWorker";
     import TreeSearchWorker from "../treeSearchWorker?worker&inline";
-    import { tick } from "svelte";
-    import { copyingNodes, currentNav, currentPath, currentSiblings, currentTextSlots, explorerScrollTop, selectedNodes } from "../stores";
-    import { findNodeByPath, getNodeTlContent, gotoNode } from "../utils";
+    import { onDestroy, onMount, tick } from "svelte";
+    import { copyingNodes, currentNav, currentPath, currentSiblings, currentTextSlots, explorerScrollTop, selectedNodes, tlProgress } from "../stores";
+    import { computeProgress, findNodeByPath, getNodeTlContent, gotoNode, updateTranslationsFromDOM } from "../utils";
     import type { IPanelAction } from "../types";
     import { vscode } from "../vscode";
     import * as l10n from "@vscode/l10n";
+
+    export let progressExcludeIds: Set<string> | undefined = undefined;
 
     let nodes: ITreeNode[] = [];
 
@@ -33,6 +35,24 @@
     let hideExists = false;
     let translationMap: { [pathStr: string]: string[] } = {};
 
+    function recomputeProgress() {
+        $tlProgress = computeProgress(nodes, translationMap, progressExcludeIds);
+    }
+
+    function onDocumentInput() {
+        if (updateTranslationsFromDOM($currentPath, translationMap)) {
+            recomputeProgress();
+        }
+    }
+
+    onMount(() => {
+        document.addEventListener("input", onDocumentInput);
+    });
+
+    onDestroy(() => {
+        document.removeEventListener("input", onDocumentInput);
+    });
+
     function onMessage(e: MessageEvent<ControllerMessage>) {
         const message = e.data;
         switch (message.type) {
@@ -42,11 +62,13 @@
 
             case "setTranslationMap":
                 translationMap = message.map;
+                recomputeProgress();
                 break;
 
             case "setNodes":
                 nodes = message.nodes;
-                translationMap = {};
+                translationMap = {}; // clear on new node tree
+                recomputeProgress();
 
                 // Restore the currently selected node's states
                 let [currentNode, siblings] = findNodeByPath($currentPath, nodes) || [null, null];
@@ -73,6 +95,7 @@
                     }
                     translationMap[pathStr][message.index] = message.content;
                 }
+                recomputeProgress();
                 break;
         }
     }

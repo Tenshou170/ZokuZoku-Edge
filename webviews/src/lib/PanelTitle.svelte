@@ -5,12 +5,16 @@
     export let label = l10n.t("Panel");
     export let actions: (IPanelAction | null)[] = [];
     export let charCount: number | undefined = undefined;
+    export let tlProgress: number | undefined = undefined;
 </script>
 
 <div class="title">
     <div class="title-label" title={label}>
         {label}
     </div>
+    {#if tlProgress !== undefined}
+        <span class="tl-progress" title={l10n.t("Translation progress")}>{tlProgress}%</span>
+    {/if}
     {#if charCount !== undefined}
         <span class="char-count" title={l10n.t("Character count")}>{charCount}</span>
     {/if}
@@ -51,6 +55,7 @@
         white-space: nowrap;
     }
 
+    .tl-progress,
     .char-count {
         font-size: 11px;
         color: var(--vscode-descriptionForeground, rgba(204, 204, 204, 0.7));

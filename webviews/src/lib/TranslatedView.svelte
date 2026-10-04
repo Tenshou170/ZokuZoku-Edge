@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { currentPath } from "../stores";
+    import { currentPath, tlProgress } from "../stores";
     import type { IPanelAction } from "../types";
     import { vscode } from "../vscode";
     import PanelTitle from "./PanelTitle.svelte";
@@ -26,7 +26,7 @@
 </script>
 
 <div class="translated-view">
-    <PanelTitle label={l10n.t("Translated")} actions={actions} charCount={charCount} />
+    <PanelTitle label={l10n.t("Translated")} actions={actions} charCount={charCount} tlProgress={$tlProgress} />
     <svelte:component this={inner} on:updateActions={onActionsUpdate} on:updateCharCount={onCharCountUpdate} />
 </div>
 
