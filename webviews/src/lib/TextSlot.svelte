@@ -25,6 +25,12 @@
       : l10n.t("Ctrl + Click to follow link...");
   }
 
+  // Single-line slots are rendered as <input>, which cannot hold real newlines.
+  // Store the literal "\n" escape instead; doPostContent() converts it back on save.
+  if (!multiline && content !== null) {
+    content = content.replace(/\n/g, "\\n");
+  }
+
   let focused = false;
   function onFocus() {
     focused = true;
@@ -67,6 +73,10 @@
       ) {
         prevPostedContent = message.content;
         content = message.content;
+
+        if (!multiline && content !== null) {
+          content = content.replace(/\n/g, "\\n");
+        }
       }
     };
     vscode.postMessage({
