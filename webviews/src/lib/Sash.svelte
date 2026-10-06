@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { onDestroy } from "svelte";
+
     export let horizontal = false;
     export let left = false;
     export let top = false;
@@ -9,6 +11,11 @@
     $: sign = left || top ? -1 : 1;
 
     let prevX = 0, prevY = 0;
+    function stopDrag() {
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", onMouseUp);
+    }
+
     function onMouseDown(e: MouseEvent) {
         e.preventDefault();
         prevX = e.screenX;
@@ -36,9 +43,13 @@
 
     function onMouseUp(e: MouseEvent) {
         e.preventDefault();
-        document.removeEventListener("mousemove", onMouseMove);
-        document.removeEventListener("mouseup", onMouseUp);
+        stopDrag();
     }
+
+    // The view can be torn down while a drag is still in flight (closing the
+    // editor, switching views); without this the document listeners outlive
+    // the component and keep mutating a detached `size`.
+    onDestroy(stopDrag);
 </script>
 
 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
