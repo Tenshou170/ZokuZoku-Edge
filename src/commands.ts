@@ -136,10 +136,19 @@ const COMMANDS: CommandTree = {
         },
 
         async runAutomation() {
-            const filename = await vscode.window.showQuickPick(automation.getScripts(), {
-                placeHolder: vscode.l10n.t("Pick a script to run")
-            });
-            if (filename) {
+            try {
+                const scriptsDir = automation.getScriptDir();
+                const scripts = await automation.getScripts();
+                if (!scripts.length) {
+                    automation.noScripts(scriptsDir);
+                    return;
+                }
+                const filename = await vscode.window.showQuickPick(scripts, {
+                    placeHolder: vscode.l10n.t("Pick a script to run")
+                });
+                if (!filename) {
+                    return;
+                }
                 vscode.window.withProgress({
                     location: vscode.ProgressLocation.Notification,
                     title: vscode.l10n.t("Running {0}...", {0: filename})
@@ -151,6 +160,9 @@ const COMMANDS: CommandTree = {
                         vscode.window.showErrorMessage(e instanceof Error ? e.message : String(e));
                     }
                 });
+            }
+            catch (e) {
+                vscode.window.showErrorMessage(e instanceof Error ? e.message : String(e));
             }
         },
 
