@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { logger } from '../logger';
 import { getEditorHtml, makeEditForStringProperty } from './utils';
 import { ControllerMessage, EditorMessage, IEntryTreeNode, ITreeNode, TreeNodeId } from './sharedTypes';
 import { JsonDocument, utils } from '../core';
@@ -262,7 +263,7 @@ export class MdbEditorProvider extends EditorBase implements vscode.CustomTextEd
                     invalidateStatusCache(document.uri);
                 }
             } catch (e) {
-                console.warn(`Failed to cleanup ghost file ${document.uri}: ${e}`);
+                logger.warn(`Failed to cleanup ghost file ${document.uri}: ${e}`);
             }
         }));
     }));

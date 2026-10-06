@@ -171,7 +171,6 @@ class SQLite {
             this.sqliteCommand = validateSqliteCommand(sqliteCommand, this.extensionPath);
         } catch (e) {
             const message = (e as Error).message;
-            console.error(message);
             logger.error(message);
             window.showErrorMessage(message);
             this.sqliteCommand = "";

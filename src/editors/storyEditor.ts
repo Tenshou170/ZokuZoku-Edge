@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { logger } from '../logger';
 import { getEditorHtml, makeEditForArray, makeEditForStringProperty } from './utils';
 import { StoryEditorControllerMessage, EditorMessage, IEntryTreeNode, IStoryTextSlot, ITreeNode, StoryTextSlotType, TreeNodeId } from './sharedTypes';
 import { JsonArrayEdit, JsonDocument, JsonEdit, JsonObjectEdit, LocalizedDataManager } from '../core';
@@ -458,7 +459,7 @@ export class StoryEditorProvider extends EditorBase implements vscode.CustomText
                     invalidateStatusCache(document.uri);
                 }
             } catch (e) {
-                console.warn(`Failed to cleanup ghost file ${document.uri}: ${e}`);
+                logger.warn(`Failed to cleanup ghost file ${document.uri}: ${e}`);
             }
 
             return fs.rm(assetInfo.voiceCacheDir, { recursive: true, force: true });

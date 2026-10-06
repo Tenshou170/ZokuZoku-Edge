@@ -3,6 +3,7 @@ import { platform } from 'os';
 import { join } from 'path';
 import { existsSync } from 'fs';
 import { SQLITE_WIN32_VER } from '../defines';
+import { logger } from '../logger';
 
 /**
  * Validate the sqlite3 command/path passed as argument, if not valid fallback to the binary in the bin directory.
@@ -29,7 +30,7 @@ export function validateSqliteCommand(sqliteCommand: string, extensionPath: stri
 export function isSqliteCommandValid(sqliteCommand: string) {
     const proc = spawnSync(sqliteCommand, [`-version`]);
     if (proc.error) {
-        console.log(`'${sqliteCommand}' is not a valid SQLite command: ${proc.error}`);
+        logger.log(`'${sqliteCommand}' is not a valid SQLite command: ${proc.error}`);
         return false;
     }
     const error = proc.stderr.toString();
@@ -38,7 +39,7 @@ export function isSqliteCommandValid(sqliteCommand: string) {
     // if there is any error the command is not valid
     // Note: the string match is a workaround for CentOS (and maybe other OS's) where the command throws an error at the start but everything works fine
     if (error && !error.match(/: \/lib64\/libtinfo\.so\.[0-9]+: no version information available \(required by /)) {
-        console.log(`'${sqliteCommand}' is not a valid SQLite command: ${error}`);
+        logger.log(`'${sqliteCommand}' is not a valid SQLite command: ${error}`);
         return false;
     }
 
@@ -46,7 +47,7 @@ export function isSqliteCommandValid(sqliteCommand: string) {
     const match = output.match(/3\.(?:9|[0-9][0-9])\.[0-9]{1,2} [0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}/);
 
     if (!match) {
-        console.log(`'${sqliteCommand}' is not a valid SQLite command: version must be >= 3.9`);
+        logger.log(`'${sqliteCommand}' is not a valid SQLite command: version must be >= 3.9`);
     }
 
     return match ? true : false;
@@ -67,17 +68,17 @@ export function getSqliteBinariesPath(extensionPath: string): string {
             sqliteBin = SQLITE_WIN32_VER;
             break;
         default:
-            console.log(`Fallback binary not found: system OS not recognized.`);
+            logger.log(`Fallback binary not found: system OS not recognized.`);
             sqliteBin = '';
             break;
     }
     if (sqliteBin) {
         const path = join(extensionPath, 'bin', sqliteBin);
         if (existsSync(path)) {
-            console.log(`Fallback SQLite binary found: '${path}'.`);
+            logger.log(`Fallback SQLite binary found: '${path}'.`);
             return path;
         } else {
-            console.log(`Fallback SQLite binary not found: '${path}' does not exist.`);
+            logger.log(`Fallback SQLite binary not found: '${path}' does not exist.`);
             return '';
         }
     } else {

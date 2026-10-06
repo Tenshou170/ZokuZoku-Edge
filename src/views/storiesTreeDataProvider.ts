@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { logger } from '../logger';
 import SQLite from '../sqlite';
 import { LocalizedDataManager, utils } from '../core';
 import RefreshableTreeDataProviderBase from './refreshableTreeDataProviderBase';
@@ -81,7 +82,7 @@ async function getExtraStoryMapping(): Promise<Map<string, number>> {
                     }
                 }
             } catch (e) {
-                console.error("Failed to query story_extra_story_data", e);
+                logger.error(`Failed to query story_extra_story_data: ${e}`);
             }
             return map;
         })();
@@ -113,7 +114,7 @@ async function getEventStoryMapping(): Promise<Map<string, number>> {
                     }
                 }
             } catch (e) {
-                console.error("Failed to query story_event_story_data", e);
+                logger.error(`Failed to query story_event_story_data: ${e}`);
             }
             return map;
         })();
@@ -145,7 +146,7 @@ async function getMainStoryMapping(): Promise<Map<string, number>> {
                     }
                 }
             } catch (e) {
-                console.error("Failed to query main_story_data", e);
+                logger.error(`Failed to query main_story_data: ${e}`);
             }
             return map;
         })();
@@ -167,7 +168,7 @@ async function getSingleModeMapping(): Promise<Map<string, number>> {
                     }
                 }
             } catch (e) {
-                console.error("Failed to query single_mode_story_data", e);
+                logger.error(`Failed to query single_mode_story_data: ${e}`);
             }
             return map;
         })();
@@ -189,7 +190,7 @@ async function getCampaignStoryMapping(): Promise<Map<string, number>> {
                     }
                 }
             } catch (e) {
-                console.error("Failed to query campaign_story_data", e);
+                logger.error(`Failed to query campaign_story_data: ${e}`);
             }
             return map;
         })();

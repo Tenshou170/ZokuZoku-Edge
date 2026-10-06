@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { logger } from '../logger';
 import jsonToAst from "json-to-ast";
 import * as utils from './utils.js';
 
@@ -304,7 +305,7 @@ export class JsonDocument<T> extends vscode.Disposable {
             switch (edit.type) {
                 case "object":
                     if (node.type !== "Object") {
-                        console.error(`${JSON.stringify(node)}`);
+                        logger.error(`Unexpected JSON node: ${JSON.stringify(node)}`);
                         throw new Error(vscode.l10n.t('JSON node type differs from schema'));
                     }
                     switch (edit.action) {
@@ -347,7 +348,7 @@ export class JsonDocument<T> extends vscode.Disposable {
 
                 case "array":
                     if (node.type !== "Array") {
-                        console.error(`${JSON.stringify(node)}`);
+                        logger.error(`Unexpected JSON node: ${JSON.stringify(node)}`);
                         throw new Error(vscode.l10n.t('JSON node type differs from schema'));
                     }
                     switch (edit.action) {

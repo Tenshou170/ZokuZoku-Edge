@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { logger } from '../logger';
 import { getEditorHtml, makeEditForArray } from './utils';
 import { ControllerMessage, EditorMessage, IEntryTreeNode, ITreeNode, TreeNodeId } from './sharedTypes';
 import { JsonDocument } from '../core';
@@ -186,7 +187,7 @@ export class RaceStoryEditorProvider extends EditorBase implements vscode.Custom
                     invalidateStatusCache(document.uri);
                 }
             } catch (e) {
-                console.warn(`Failed to cleanup ghost file ${document.uri}: ${e}`);
+                logger.warn(`Failed to cleanup ghost file ${document.uri}: ${e}`);
             }
 
             return fs.rm(assetInfo.voiceCacheDir, { recursive: true, force: true });
