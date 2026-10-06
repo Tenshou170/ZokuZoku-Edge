@@ -1,6 +1,17 @@
-// Original by KevinVG207
-// Uma-Carotene-TL/src/ui/common.py
-const categories: { [key: string]: string } = {
+// GENERATED FILE — do not edit by hand.
+// Regenerate with: node scripts/generate-mdb-category-labels.mjs --mdb <master.mdb> --pakupaku <PakuPaku repo>
+// Source: master.mdb text_data category ids (383) + PakuPaku en labels, 2026-10-06.
+//
+// Labels are keyed by CATEGORY ID so that a label rename can never orphan the
+// translations attached to it. Translations are resolved at runtime through
+// vscode.l10n with the `mdb.category.<id>` keys seeded into the l10n bundles
+// by scripts/extract-l10n.mjs; this table doubles as the English fallback.
+import * as vscode from 'vscode';
+
+const KEY_PREFIX = 'mdb.category.';
+
+// English labels by text_data category id.
+export const EN_LABELS: { [id: string]: string } = {
     "1": "Error Descriptions",
     "2": "Error Titles",
     "3": "Tutorials",
@@ -67,10 +78,8 @@ const categories: { [key: string]: string } = {
     "120": "Scenario Introductions",
     "121": "Umamusume Classes",
     "128": "Jukebox Song Descriptions",
-    "129": "(Deprecated in JP) SP & Monies",
     "130": "Honor Titles",
     "131": "Honor Title Requirements",
-    "132": "Daily Races",
     "133": "Items (Alt Set)",
     "136": "Chat Texts",
     "138": "Training Names (Career)",
@@ -115,7 +124,6 @@ const categories: { [key: string]: string } = {
     "182": "Character: Names (Katakana)",
     "184": "Push Notifications (TP)",
     "185": "Push Notifications (RP)",
-    "186": "Support Card Tutorials",
     "187": "Campaign: Names",
     "188": "Campaign: Descriptions",
     "189": "Story Event Names",
@@ -370,14 +378,43 @@ const categories: { [key: string]: string } = {
     "460": "Tracen Ramen Scenario (Part 8)",
     "464": "Tracen Ramen Scenario (Part 9)",
     "465": "Tracen Ramen Scenario (Part 10)",
-    "466": "Global Messed Up Database Entries",
     "467": "Tazuna Post-Race Tips (Set 1)",
     "468": "Tazuna Post-Race Tips (Set 2)",
     "469": "Push Notifications (Independent Training)",
+    "470": "Trainer Abilities (Part 1)",
+    "471": "Trainer Abilities (Part 2)",
     "475": "Tracen Ramen Scenario (Part 11)",
+    "476": "Ultimate Sparks for Science (Part 1)",
+    "477": "Ultimate Sparks for Science (Part 2)",
+    "478": "Ultimate Sparks for Science (Part 3)",
+    "479": "Ultimate Sparks for Science (Part 4)",
+    "480": "Trainer Abilities (Part 3)",
+    "482": "Ultimate Sparks for Science (Part 5)",
+    "483": "Ultimate Sparks for Science (Part 6)",
     "484": "Tracen Ramen Scenario (Part 12)",
     "485": "Tracen Ramen Scenario (Part 13)",
     "486": "Tracen Ramen Scenario (Part 14)",
-    "487": "Tracen Ramen Scenario (Part 15)"
+    "487": "Tracen Ramen Scenario (Part 15)",
 };
-export default categories;
+
+/**
+ * Resolves a category label for the current UI language.
+ * Falls back to the English label when the bundle has no entry.
+ */
+export function getMdbCategoryName(id: string): string | undefined {
+    if (!(id in EN_LABELS)) {
+        return undefined;
+    }
+    const key = KEY_PREFIX + id;
+    const translated = vscode.l10n.t(key);
+    // vscode.l10n.t returns the input unchanged when the bundle has no match.
+    return translated !== key ? translated : EN_LABELS[id];
+}
+
+// Index-style access, matching the previous hand-written table so call sites
+// keep working unchanged: `categories["6"] ?? ""`.
+export default new Proxy<Record<string, string | undefined>>({}, {
+    get(_target, prop: string | symbol) {
+        return typeof prop === 'string' ? getMdbCategoryName(prop) : undefined;
+    }
+});
