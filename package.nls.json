@@ -1,6 +1,7 @@
 {
   "extension.displayName": "ZokuZoku Edge",
   "extension.description": "Hachimi translation tool",
+  "capabilities.untrustedWorkspaces.description": "ZokuZoku Edge reads game data and executes .vscode/zk_auto automation scripts from the workspace. Trust is required to run automations and to use workspace-defined game data paths, the sqlite3 command, and the decryption key.",
   "activitybar.zokuzoku.title": "ZokuZoku Edge",
   "view.inactive.name": "Inactive",
   "view.stories.name": "All stories",

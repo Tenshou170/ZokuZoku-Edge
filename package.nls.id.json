@@ -1,6 +1,7 @@
 {
   "extension.displayName": "ZokuZoku Edge",
   "extension.description": "Alat Terjemahan Hachimi",
+  "capabilities.untrustedWorkspaces.description": "ZokuZoku Edge membaca data game dan menjalankan skrip otomasi .vscode/zk_auto dari workspace. Kepercayaan diperlukan untuk menjalankan otomasi serta memakai jalur data game, perintah sqlite3, dan kunci dekripsi yang ditentukan workspace.",
   "activitybar.zokuzoku.title": "ZokuZoku Edge",
   "view.inactive.name": "Nonaktif",
   "view.stories.name": "Semua Cerita",

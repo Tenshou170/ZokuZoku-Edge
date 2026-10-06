@@ -22,6 +22,18 @@
   ],
   "main": "./out/extension.js",
   "l10n": "./l10n",
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "%capabilities.untrustedWorkspaces.description%",
+      "restrictedConfigurations": [
+        "zokuzoku.gameDataDir",
+        "zokuzoku.manualMetaPath",
+        "zokuzoku.sqlite3",
+        "zokuzoku.decryption.metaKey"
+      ]
+    }
+  },
   "contributes": {
     "viewsContainers": {
       "activitybar": [
@@ -148,11 +160,13 @@
       },
       {
         "command": "zokuzoku.runAllAutomations",
-        "title": "%command.runAllAutomations.title%"
+        "title": "%command.runAllAutomations.title%",
+        "enablement": "isWorkspaceTrusted"
       },
       {
         "command": "zokuzoku.runAutomation",
-        "title": "%command.runAutomation.title%"
+        "title": "%command.runAutomation.title%",
+        "enablement": "isWorkspaceTrusted"
       },
       {
         "command": "zokuzoku.clearCache",

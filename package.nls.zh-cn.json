@@ -1,6 +1,7 @@
 {
   "extension.displayName": "ZokuZoku Edge",
   "extension.description": "Hachimi 翻译工具",
+  "capabilities.untrustedWorkspaces.description": "ZokuZoku Edge 会读取游戏数据，并执行工作区中的 .vscode/zk_auto 自动化脚本。运行自动化脚本，以及使用工作区提供的游戏数据路径、sqlite3 命令和解密密钥，都需要受信任的工作区。",
   "activitybar.zokuzoku.title": "ZokuZoku Edge",
   "view.inactive.name": "未启用",
   "view.stories.name": "全部故事",
