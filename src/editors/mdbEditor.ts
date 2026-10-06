@@ -12,7 +12,11 @@ import { EditorBase } from './editorBase';
 import { whenReady } from '../extensionContext';
 
 const TABLE_CATEGORIZERS: {[K in MdbTableName]?: (column: string) => Promise<string> | string} = {
-    "text_data": category => `${category} ${textDataCategories[category] ?? ""}`,
+    "text_data": category => {
+        const label = textDataCategories[category];
+        // No dangling space for categories the table does not know yet.
+        return label ? `${category} ${label}` : `${category}`;
+    },
     "character_system_text": async characterId => {
         if (config().get<boolean>("showTranslatedCharacterNames")) {
             const translatedData = await utils.getTranslatedTextData();

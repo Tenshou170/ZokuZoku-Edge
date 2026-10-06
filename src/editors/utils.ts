@@ -36,7 +36,7 @@ export function getEditorHtml(extensionUri: vscode.Uri, webview: vscode.Webview,
     const nonce = getNonce();
     return `
         <!doctype html>
-        <html lang="en">
+        <html lang="${vscode.env.language}">
         <head>
             <meta charset="UTF-8" />
             <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob: ${webview.cspSource}; script-src * 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' data: blob: ${webview.cspSource}; style-src * 'unsafe-inline' data: blob: ${webview.cspSource}; img-src * data: blob: ${webview.cspSource}; media-src * data: blob: ${webview.cspSource}; connect-src * data: blob: ${webview.cspSource}; font-src * data: blob: ${webview.cspSource}; worker-src * data: blob: ${webview.cspSource};">
