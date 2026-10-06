@@ -174,6 +174,8 @@ const COMMANDS: CommandTree = {
                 try {
                     await fs.rm(path.join(ZOKUZOKU_DIR, "cache"), { recursive: true, force: true });
                     assetHelper.clearEncryptionCache();
+                    utils.invalidateTextDataCache();
+                    utils.invalidateStatusCache();
                     vscode.window.showInformationMessage(vscode.l10n.t("Cache cleared."));
                 }
                 catch (e) {

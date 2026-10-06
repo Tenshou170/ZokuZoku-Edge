@@ -6,12 +6,13 @@ import * as tar from 'tar';
 import { spawn } from "child_process";
 
 import downloader from './core/downloader';
-import { getAllGameDataDirs, getAllGameInstallPaths, getEntryStatus } from './core/utils';
+import { getAllGameDataDirs, getAllGameInstallPaths, getEntryStatus, invalidateStatusCache, invalidateTextDataCache } from './core/utils';
 import config, { CONFIG_SECTION } from './config';
 import { setReady } from './extensionContext';
 import { ZOKUZOKU_DIR, PYMPORT_DIR, PYTHON_PACKAGES_DIR, PYMPORT_INSTALLED_FILE, PYMPORT_VER, UNITYPY_VER, APSW_VER } from "./defines";
 import SQLite from './sqlite';
 import { getPythonEnvironment, applyPythonEnvironment } from './core/env';
+import assetHelper from './core/assetHelper';
 
 const YES = vscode.l10n.t('Yes');
 const NO = vscode.l10n.t('No');
@@ -320,6 +321,17 @@ async function tryActivate(context: vscode.ExtensionContext) {
 export async function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(async (event: vscode.ConfigurationChangeEvent) => {
         if (event.affectsConfiguration(CONFIG_SECTION)) {
+            // A new game data dir means new master.mdb/meta; anything cached off
+            // the old one is wrong until dropped. Fully-qualified ids are used so
+            // these match regardless of how the event reports nested settings.
+            if (event.affectsConfiguration(`${CONFIG_SECTION}.gameDataDir`) ||
+                event.affectsConfiguration(`${CONFIG_SECTION}.manualMetaPath`) ||
+                event.affectsConfiguration(`${CONFIG_SECTION}.gameVersion`) ||
+                event.affectsConfiguration(`${CONFIG_SECTION}.decryption.metaKey`)) {
+                invalidateTextDataCache();
+                invalidateStatusCache();
+                assetHelper.clearEncryptionCache();
+            }
             SQLite.init(context.extensionPath);
             checkEnabled();
         }

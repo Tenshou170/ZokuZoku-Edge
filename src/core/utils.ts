@@ -73,6 +73,19 @@ export async function getTextDataCategory(category: number) {
 }
 
 const textDataCache: {[key: number]: {[key: number]: string}} = {};
+
+/**
+ * Drops the cached master.mdb text_data categories. Needed whenever the game
+ * data changes underneath us (a game update, or switching game data dir),
+ * otherwise character/scenario names stay stale for the rest of the session.
+ */
+export function invalidateTextDataCache() {
+    for (const key of Object.keys(textDataCache)) {
+        delete textDataCache[+key];
+    }
+    invalidateTranslatedTextDataCache();
+}
+
 export async function getTextDataCategoryCached(category: number) {
     let cache = textDataCache[category];
     if (!cache) {
