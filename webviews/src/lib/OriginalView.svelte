@@ -19,6 +19,9 @@
   let audioElement: HTMLAudioElement | undefined;
   let voiceUris: { [key: string]: string } | undefined;
 
+  let userVolume: number | undefined;
+  let lastConfigVolume: number | undefined;
+
   function onMessage(e: MessageEvent<ControllerMessage>) {
     const message = e.data;
     if (message.type == "loadVoice") {
@@ -28,13 +31,19 @@
     }
   }
 
+  function applyVolume() {
+    if (!audioElement) return;
+    const vol = userVolume ?? $config?.voiceVolume ?? 1;
+    audioElement.volume = Math.max(0, Math.min(1, vol));
+  }
+
+  function onVolumeChange(e: CustomEvent<number>) {
+    userVolume = e.detail;
+  }
+
   let voiceSrc: string | undefined;
   function updateVoiceSrc(path: TreeNodeId[]) {
     if (!audioElement) return;
-
-    if ($config?.voiceVolume !== undefined) {
-      audioElement.volume = Math.max(0, Math.min(1, $config.voiceVolume));
-    }
 
     const index = path.join("/");
     let src = voiceUris?.[index] || "";
@@ -43,6 +52,7 @@
       audioElement.addEventListener(
         "canplay",
         function () {
+          applyVolume();
           this.play();
         },
         { once: true },
@@ -51,8 +61,13 @@
     voiceSrc = src;
   }
 
-  $: if (audioElement && $config?.voiceVolume !== undefined) {
-    audioElement.volume = Math.max(0, Math.min(1, $config.voiceVolume));
+  $: if (
+    $config?.voiceVolume !== undefined &&
+    $config.voiceVolume !== lastConfigVolume
+  ) {
+    lastConfigVolume = $config.voiceVolume;
+    userVolume = undefined;
+    applyVolume();
   }
 
   $: !audioPlayerHidden && updateVoiceSrc($currentPath);
@@ -68,6 +83,7 @@
     bind:audioElement
     bind:hidden={audioPlayerHidden}
     src={voiceSrc}
+    on:volumechange={onVolumeChange}
   />
 </div>
 

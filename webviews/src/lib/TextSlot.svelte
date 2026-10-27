@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { ControllerMessage, TreeNodeId } from "../sharedTypes";
-  import { currentPath, currentSiblings } from "../stores";
+  import { onMount, tick } from "svelte";
+  import { currentPath, currentSiblings, shouldFocusTranslationSlot } from "../stores";
   import { findNodeByPath, gotoNode } from "../utils";
   import { vscode } from "../vscode";
   import TextSlotInner from "./TextSlotInner.svelte";
@@ -61,21 +62,50 @@
 
   let prevPostedContent = content;
 
+  let autoFocus = false;
+  let initialContentLoaded = false;
+
+  function checkAutoFocus() {
+    if ($shouldFocusTranslationSlot && !readonly && multiline) {
+      $shouldFocusTranslationSlot = false;
+      tick().then(() => {
+        autoFocus = true;
+        tick().then(() => {
+          autoFocus = false;
+        });
+      });
+    }
+  }
+
+  onMount(() => {
+    if (content !== null) {
+      checkAutoFocus();
+    }
+  });
+
   let onMessage: ((e: MessageEvent<ControllerMessage>) => void) | undefined;
   if (content === null) {
     onMessage = (e) => {
       const message: ControllerMessage = e.data;
       if (
-        !focused &&
         message.type == "setTextSlotContent" &&
         message.entryPath.join("/") == entryPath.join("/") &&
         message.index == index
       ) {
-        prevPostedContent = message.content;
-        content = message.content;
-
-        if (!multiline && content !== null) {
-          content = content.replace(/\n/g, "\\n");
+        if (!initialContentLoaded) {
+          initialContentLoaded = true;
+          prevPostedContent = message.content;
+          content = message.content;
+          if (!multiline && content !== null) {
+            content = content.replace(/\n/g, "\\n");
+          }
+          checkAutoFocus();
+        } else if (!focused) {
+          prevPostedContent = message.content;
+          content = message.content;
+          if (!multiline && content !== null) {
+            content = content.replace(/\n/g, "\\n");
+          }
         }
       }
     };
@@ -146,6 +176,7 @@
   title={tooltip}
   {userData}
   {noWrap}
+  {autoFocus}
   on:focus={onFocus}
   on:blur={onBlur}
   on:keydown={onKeyDown}

@@ -49,3 +49,4 @@ export const currentNav = writable<{
 }>({});
 export const currentSiblings = writable<ITreeNode[]>([]);
 export const tlProgress = writable<number>(0);
+export const shouldFocusTranslationSlot = writable<boolean>(false);

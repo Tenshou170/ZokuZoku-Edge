@@ -32,6 +32,8 @@
       />
     {/if}
   {/if}
+  <div class="auto-arrow">▼</div>
+  <div class="auto-btn">Auto</div>
 </div>
 
 <style>
@@ -45,5 +47,37 @@
     position: relative;
     aspect-ratio: 1448/222;
     container-type: size;
+  }
+
+  .auto-arrow {
+    position: absolute;
+    bottom: 20%;
+    right: 8.5%;
+    color: #68d25d;
+    font-size: 16cqh;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+  }
+
+  .auto-btn {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 44cqh;
+    height: 44cqh;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.92);
+    color: #794016;
+    font-family: "CustomFont", var(--vscode-font-family);
+    font-size: 15cqh;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    letter-spacing: 0.02em;
   }
 </style>

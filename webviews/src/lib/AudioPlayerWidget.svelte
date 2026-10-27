@@ -1,13 +1,20 @@
 <script lang="ts">
+    import { createEventDispatcher } from "svelte";
     import * as l10n from "@vscode/l10n";
 
     export let src: string | undefined = undefined;
     export let hidden = false;
     export let audioElement: HTMLAudioElement | undefined;
 
+    const dispatch = createEventDispatcher<{ volumechange: number }>();
+
     function onClose() {
         hidden = true;
         audioElement!.pause();
+    }
+
+    function onVolumeChange() {
+        if (audioElement) dispatch("volumechange", audioElement.volume);
     }
 </script>
 
@@ -17,6 +24,7 @@
         controlsList="noplaybackrate nodownload"
         {src}
         bind:this={audioElement}
+        on:volumechange={onVolumeChange}
     >
         <slot />
     </audio>

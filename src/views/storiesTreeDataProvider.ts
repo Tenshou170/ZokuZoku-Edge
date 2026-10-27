@@ -52,30 +52,45 @@ const categoryNames: {[key: string]: string} = {
     "83": vscode.l10n.t("> Support Card Events (SSR)")
 };
 
-let extraStoryMapPromise: Promise<Map<string, number>> | undefined;
-let eventStoryMapPromise: Promise<Map<string, number>> | undefined;
+interface ExtraStoryMapping {
+    storyMap: Map<string, number>;
+    groupMap: Map<string, number>;
+}
+let extraStoryMapPromise: Promise<ExtraStoryMapping> | undefined;
+
+interface EventStoryMapping {
+    storyMap: Map<string, number>;
+    groupMap: Map<string, number>;
+}
+let eventStoryMapPromise: Promise<EventStoryMapping> | undefined;
+
 let mainStoryMapPromise: Promise<Map<string, number>> | undefined;
 let singleModeMapPromise: Promise<Map<string, number>> | undefined;
 let campaignStoryMapPromise: Promise<Map<string, number>> | undefined;
 
-async function getExtraStoryMapping(): Promise<Map<string, number>> {
+async function getExtraStoryMapping(): Promise<ExtraStoryMapping> {
     if (!extraStoryMapPromise) {
         extraStoryMapPromise = (async () => {
-            const map = new Map<string, number>();
+            const storyMap = new Map<string, number>();
+            const groupMap = new Map<string, number>();
             try {
                 const res = await SQLite.instance.queryMdb(
-                    `SELECT story_extra_id, story_id_1, story_id_2, story_id_3, story_id_4, story_id_5 FROM story_extra_story_data`
+                    `SELECT id, story_extra_id, story_id_1, story_id_2, story_id_3, story_id_4, story_id_5 FROM story_extra_story_data`
                 );
                 if (res && res[0] && res[0].rows) {
                     for (const row of res[0].rows) {
-                        const exRowId = Number(row[0]);
-                        for (let i = 1; i < row.length; i++) {
+                        const id = Number(row[0]);
+                        const extraId = Number(row[1]);
+                        for (let i = 2; i < row.length; i++) {
                             const stId = row[i];
                             if (stId) {
                                 const stStr = String(stId);
-                                map.set(stStr, exRowId);
+                                storyMap.set(stStr, id);
+                                storyMap.set("0" + stStr, id);
                                 if (stStr.startsWith("10") && stStr.length >= 9) {
-                                    map.set(stStr.slice(2, 6), exRowId);
+                                    const grp = stStr.slice(2, 6);
+                                    groupMap.set(grp, extraId);
+                                    groupMap.set(String(+grp), extraId);
                                 }
                             }
                         }
@@ -84,30 +99,35 @@ async function getExtraStoryMapping(): Promise<Map<string, number>> {
             } catch (e) {
                 logger.error(`Failed to query story_extra_story_data: ${e}`);
             }
-            return map;
+            return { storyMap, groupMap };
         })();
     }
     return extraStoryMapPromise;
 }
 
-async function getEventStoryMapping(): Promise<Map<string, number>> {
+async function getEventStoryMapping(): Promise<EventStoryMapping> {
     if (!eventStoryMapPromise) {
         eventStoryMapPromise = (async () => {
-            const map = new Map<string, number>();
+            const storyMap = new Map<string, number>();
+            const groupMap = new Map<string, number>();
             try {
                 const res = await SQLite.instance.queryMdb(
-                    `SELECT story_event_id, story_id_1, story_id_2, story_id_3, story_id_4, story_id_5 FROM story_event_story_data`
+                    `SELECT id, story_event_id, story_id_1, story_id_2, story_id_3, story_id_4, story_id_5 FROM story_event_story_data`
                 );
                 if (res && res[0] && res[0].rows) {
                     for (const row of res[0].rows) {
-                        const evRowId = Number(row[0]);
-                        for (let i = 1; i < row.length; i++) {
+                        const id = Number(row[0]);
+                        const eventId = Number(row[1]);
+                        for (let i = 2; i < row.length; i++) {
                             const stId = row[i];
                             if (stId) {
                                 const stStr = String(stId);
-                                map.set(stStr, evRowId);
-                                if (stStr.startsWith("9") && stStr.length >= 9) {
-                                    map.set(stStr.slice(2, 6), evRowId);
+                                storyMap.set(stStr, id);
+                                storyMap.set("0" + stStr, id);
+                                if (stStr.startsWith("9") && stStr.length >= 8) {
+                                    const grp = stStr.slice(1, 5);
+                                    groupMap.set(grp, eventId);
+                                    groupMap.set(String(+grp), eventId);
                                 }
                             }
                         }
@@ -116,7 +136,7 @@ async function getEventStoryMapping(): Promise<Map<string, number>> {
             } catch (e) {
                 logger.error(`Failed to query story_event_story_data: ${e}`);
             }
-            return map;
+            return { storyMap, groupMap };
         })();
     }
     return eventStoryMapPromise;
@@ -204,13 +224,26 @@ export default class StoriesTreeDataProvider extends RefreshableTreeDataProvider
 
     override refresh() {
         utils.invalidateTranslatedTextDataCache();
+        extraStoryMapPromise = undefined;
+        eventStoryMapPromise = undefined;
+        mainStoryMapPromise = undefined;
+        singleModeMapPromise = undefined;
+        campaignStoryMapPromise = undefined;
         super.refresh();
     }
 
     private async getGroupName(categoryId: string, groupId: string): Promise<string | undefined> {
         switch (+categoryId) {
-            case 2:
-                return (await utils.getTextDataCategoryCached(112))[+groupId];
+            case 2: {
+                const cat112 = await utils.getTextDataCategoryCached(112);
+                let gId = +groupId;
+                if (gId > 100) {
+                    const act = Math.floor(gId / 100);
+                    const chapter = gId % 100;
+                    gId = act * 10 + chapter;
+                }
+                return cat112[gId] ?? cat112[+groupId];
+            }
             case 4:
             case 11:
             case 12:
@@ -233,16 +266,16 @@ export default class StoriesTreeDataProvider extends RefreshableTreeDataProvider
             case 40:
                 return (await utils.getTextDataCategoryCached(119))[+groupId]?.replaceAll("\\n", " ");
             case 9: {
-                const map = await getEventStoryMapping();
-                const eventId = map.get(groupId);
+                const { groupMap } = await getEventStoryMapping();
+                const eventId = groupMap.get(groupId) ?? groupMap.get(String(+groupId));
                 if (eventId) {
                     return (await utils.getTextDataCategoryCached(189))[eventId];
                 }
                 break;
             }
             case 10: {
-                const map = await getExtraStoryMapping();
-                const extraId = map.get(groupId);
+                const { groupMap } = await getExtraStoryMapping();
+                const extraId = groupMap.get(groupId) ?? groupMap.get(String(+groupId));
                 if (extraId) {
                     return (await utils.getTextDataCategoryCached(221))[extraId];
                 }
@@ -278,8 +311,8 @@ export default class StoriesTreeDataProvider extends RefreshableTreeDataProvider
                 break;
             }
             case 9: {
-                const map = await getEventStoryMapping();
-                const evRowId = map.get(storyId);
+                const { storyMap } = await getEventStoryMapping();
+                const evRowId = storyMap.get(storyId);
                 if (evRowId) {
                     const title = (await utils.getTextDataCategoryCached(191))[evRowId];
                     if (title) { return title; }
@@ -287,8 +320,8 @@ export default class StoriesTreeDataProvider extends RefreshableTreeDataProvider
                 break;
             }
             case 10: {
-                const map = await getExtraStoryMapping();
-                const exRowId = map.get(storyId);
+                const { storyMap } = await getExtraStoryMapping();
+                const exRowId = storyMap.get(storyId);
                 if (exRowId) {
                     const title = (await utils.getTextDataCategoryCached(222))[exRowId];
                     if (title) { return title; }

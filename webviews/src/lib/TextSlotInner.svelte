@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { tick } from "svelte";
     import type { TreeNodeId } from "../sharedTypes";
     import { highlightTags } from "../utils";
 
@@ -11,6 +12,19 @@
     export let title: string | null;
     export let userData: any = undefined;
     export let noWrap = false;
+    export let autoFocus: boolean = false;
+
+    let textareaEl: HTMLTextAreaElement | null = null;
+
+    $: if (autoFocus && textareaEl) {
+        tick().then(() => {
+            if (textareaEl) {
+                textareaEl.focus();
+                const len = textareaEl.value.length;
+                textareaEl.setSelectionRange(len, len);
+            }
+        });
+    }
 
     // unused
     const _ = userData;
@@ -40,16 +54,19 @@
             role="textbox"
             aria-readonly="true"
             aria-label={ariaLabel}
-            tabindex="0"
+            tabindex="-1"
             data-slot-type={userData?.type}
+            on:focus
+            on:blur
+            on:keydown
             on:mousemove
             on:click
-            on:keydown
         >
             {@html highlightTags(value)}
         </div>
     {:else if multiline}
         <textarea
+            bind:this={textareaEl}
             class="text-slot"
             class:link
             class:active

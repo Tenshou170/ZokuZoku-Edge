@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { ControllerMessage, ITreeNode, TreeNodeId } from "../sharedTypes";
-    import { copyingNodes, currentNav, currentPath, currentSiblings, currentTextSlots, nodeStates, selectedNodes, type NodeState } from "../stores";
+    import { copyingNodes, currentNav, currentPath, currentSiblings, currentTextSlots, nodeStates, selectedNodes, shouldFocusTranslationSlot, type NodeState } from "../stores";
     import { vscode } from "../vscode";
     import IntersectionObserver from "svelte-intersection-observer";
     import * as l10n from "@vscode/l10n";
@@ -90,6 +90,7 @@
                 prev: node.prev
             };
             $currentSiblings = siblings;
+            $shouldFocusTranslationSlot = true;
         }
         return true;
     }

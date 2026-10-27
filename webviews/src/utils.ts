@@ -1,6 +1,6 @@
 import { wrapText } from "hachimi_lib";
 import type { ControllerMessage, IEntryTreeNode, ITextSlot, ITreeNode, StoryEditorConfig, TreeNodeId } from "./sharedTypes";
-import { currentNav, currentPath, currentTextSlots, selectedNodes } from "./stores";
+import { currentNav, currentPath, currentTextSlots, selectedNodes, shouldFocusTranslationSlot } from "./stores";
 import { vscode } from "./vscode";
 
 export function findNodeByPath(path: TreeNodeId[], nodes: ITreeNode[]): [ITreeNode, ITreeNode[]] | null {
@@ -53,6 +53,7 @@ export function getNodeTlContent(entryPath: TreeNodeId[], contentCount: number):
 
 export function gotoNode(node: ITreeNode, path: TreeNodeId[]) {
     if (node.type != "entry") return;
+    shouldFocusTranslationSlot.set(true);
     selectedNodes.update(() => ({ [path.join("/")]: node.content.length }));
     currentPath.update(() => path);
     currentTextSlots.update(() => node.content);

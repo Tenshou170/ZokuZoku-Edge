@@ -16,7 +16,8 @@
   // unused
   const _ = { multiline, link, active, placeholder };
 
-  $: fontSize = 13.78 * ($config?.fontSizeMultiplier ?? 1);
+  // old value was 13.78 - the new one seems to fit the real box
+  $: fontSize = 13.1257 * ($config?.fontSizeMultiplier ?? 1);
   $: lineWidth = Math.round(21 / ($config?.fontSizeMultiplier ?? 1));
   $: lineHeight = 1.5 * ($config?.lineSpacingMultiplier ?? 1);
 

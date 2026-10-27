@@ -17,7 +17,7 @@ import { resolve as resolvePath } from 'path';
 import config from '../config';
 import SQLite from '../sqlite';
 
-const STORY_VIEW_CATEGORIES = new Set<string>(["02", "04", "09"]);
+const STORY_VIEW_CATEGORIES = new Set<string>(["02", "04", "08", "09", "10", "13", "14"]);
 
 export class StoryEditorProvider extends EditorBase implements vscode.CustomTextEditorProvider {
     static readonly viewType = 'zokuzoku.storyEditor';
@@ -406,9 +406,12 @@ export class StoryEditorProvider extends EditorBase implements vscode.CustomText
                                         increment: current ? (1 / total) * 100 : 0
                                     });
                                 });
-                                const uris = Object.fromEntries(data.voiceCues.map(([id, cueId]) => [
-                                    id, webviewPanel.webview.asWebviewUri(vscode.Uri.file(paths[cueId])).toString()
-                                ]));
+                                const uris: { [key: string]: string } = {};
+                                for (const [id, cueId] of data.voiceCues) {
+                                    const wavPath = paths[cueId];
+                                    if (!wavPath) { continue; }
+                                    uris[id] = webviewPanel.webview.asWebviewUri(vscode.Uri.file(wavPath)).toString();
+                                }
                                 return uris;
                             });
                         })();
