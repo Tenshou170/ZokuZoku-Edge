@@ -10,65 +10,27 @@ permissions:
   contents: write
 
 jobs:
-  lint:
-    name: Linting and Type Checking
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.27.0
-          run_install: false
-
-      - name: Install Node.js
-        uses: actions/setup-node@v5
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Install dependencies (Root)
-        run: pnpm install --frozen-lockfile
-
-      - name: Install dependencies (Webviews)
-        run: |
-          cd webviews
-          pnpm install --frozen-lockfile
-
-      - name: Lint Extension
-        run: pnpm run lint
-
-      - name: Type Check Extension
-        run: pnpm run typecheck
-
-      - name: Type Check Webviews
-        run: |
-          cd webviews
-          pnpm run check
-
   package:
     name: Package and Release
-    needs: lint
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 10.27.0
           run_install: false
 
       - name: Install Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
+          cache-dependency-path: '**/pnpm-lock.yaml'
 
       - name: Install dependencies (Root)
         run: pnpm install --frozen-lockfile
@@ -112,7 +74,7 @@ jobs:
           fi
 
       - name: Create Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: ${{ steps.info.outputs.filename }}
           tag_name: ${{ steps.info.outputs.tag }}
