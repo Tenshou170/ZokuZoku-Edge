@@ -176,6 +176,10 @@ const COMMANDS: CommandTree = {
                     assetHelper.clearEncryptionCache();
                     utils.invalidateTextDataCache();
                     utils.invalidateStatusCache();
+                    StoriesTreeDataProvider.instance?.refresh();
+                    HomeStoriesTreeDataProvider.instance?.refresh();
+                    MainStoriesTreeDataProvider.instance?.refresh();
+                    LyricsTreeDataProvider.instance?.refresh();
                     vscode.window.showInformationMessage(vscode.l10n.t("Cache cleared."));
                 }
                 catch (e) {

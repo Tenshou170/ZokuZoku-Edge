@@ -99,7 +99,7 @@ export default class MainStoriesTreeDataProvider extends RefreshableTreeDataProv
 
             switch (level) {
                 case TreeLevel.Act: {
-                    const chapterNames = await utils.getTextDataCategory(93);
+                    const chapterNames = await utils.getTextDataCategoryCached(93);
                     const result = await queryChapters(+actNum);
 
                     for (const [ chapterId ] of result[0].rows) {
@@ -115,7 +115,7 @@ export default class MainStoriesTreeDataProvider extends RefreshableTreeDataProv
                     break;
                 }
                 case TreeLevel.Chapter: {
-                    const episodeNames = await utils.getTextDataCategory(94);
+                    const episodeNames = await utils.getTextDataCategoryCached(94);
                     const result = await queryEpisodes(+chapterId);
 
                     for (const [ id, episodeIndex ] of result[0].rows) {

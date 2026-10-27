@@ -43,7 +43,7 @@ export default class LyricsTreeDataProvider extends RefreshableTreeDataProviderB
         const queryRes = await sqlite.queryMeta(LYRICS_PATH_QUERY);
 
         // Batch get song names
-        const songNames = await utils.getTextDataCategory(16);
+        const songNames = await utils.getTextDataCategoryCached(16);
         const ldManager = LocalizedDataManager.instance!;
 
         for (const row of queryRes[0].rows) {

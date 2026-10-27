@@ -331,6 +331,11 @@ export async function activate(context: vscode.ExtensionContext) {
                 invalidateTextDataCache();
                 invalidateStatusCache();
                 assetHelper.clearEncryptionCache();
+                const { refreshAllViews } = await import("./views/index.js");
+                refreshAllViews();
+            } else if (event.affectsConfiguration(`${CONFIG_SECTION}.showTranslatedCharacterNames`)) {
+                const { refreshStoriesView } = await import("./views/index.js");
+                refreshStoriesView();
             }
             SQLite.init(context.extensionPath);
             checkEnabled();

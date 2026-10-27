@@ -1,5 +1,6 @@
 import { Buffer } from 'buffer';
 import { logger } from '../logger';
+import { getGameRegion } from './utils';
 
 // Asset Bundle Key - preserved for asset decryption
 const AB_KEY = Buffer.from("532B4631E4A7B9473E7CFB", "hex");
@@ -10,56 +11,7 @@ export { AB_KEY };
  * Detects which key type to use based on settings / path auto-detection.
  */
 export function detectKeyType(): string {
-    const config = require("../config").default();
-    const gameDataDir = config.get("gameDataDir") as string || "";
-    const gameVersion = config.get("gameVersion") as string || "Auto";
-
-    if (gameVersion === "JP") {
-        return "jp";
-    } else if (gameVersion === "EN/Global") {
-        return "eng";
-    } else if (gameVersion === "TW/Komoe") {
-        return "tw";
-    }
-
-    const normalized = gameDataDir.replace(/\\/g, "/");
-    const lowerDir = normalized.toLowerCase();
-
-    if (lowerDir.includes("komoemumamusume")) {
-        return "tw";
-    }
-
-    // Steam JP / ENG
-    if (
-        lowerDir.includes("steamapps/common") &&
-        lowerDir.includes("persistent")
-    ) {
-        if (lowerDir.includes("jpn")) {
-            return "jp";
-        }
-        return "eng";
-    }
-
-    // AppData "Umamusume" (uppercase) -> EN/Global, "umamusume" (lowercase) -> JP
-    if (
-        normalized.includes("AppData") &&
-        normalized.includes("Cygames")
-    ) {
-        if (normalized.includes("/Umamusume") || normalized.includes("\\Umamusume")) {
-            return "eng";
-        }
-        return "jp";
-    }
-
-    // DMM JP / ENG alternate
-    if (lowerDir.includes("persistent")) {
-        if (lowerDir.includes("umamusumeprettyderby") || lowerDir.includes("umamusume_data") === false) {
-            return "eng";
-        }
-        return "jp";
-    }
-
-    return "jp";
+    return getGameRegion();
 }
 
 export function isMetaEncrypted(): boolean {

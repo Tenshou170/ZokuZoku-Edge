@@ -408,21 +408,6 @@ export async function getAllGameDataDirs(): Promise<string[]> {
     return result;
 }
 
-let cachedInstallPath: string | undefined;
-export async function getGameInstallPath(): Promise<string | undefined> {
-    if (cachedInstallPath) {
-        return cachedInstallPath;
-    }
-
-    const allPaths = await getAllGameInstallPaths();
-    if (allPaths.length > 0) {
-        cachedInstallPath = allPaths[0];
-        return cachedInstallPath;
-    }
-
-    return undefined;
-}
-
 export async function updateHachimiConfig(callback: (config: any) => any) {
     const dumpPath = config().get<string>("localizeDictDump");
 

@@ -144,10 +144,11 @@ export class RaceStoryEditorProvider extends EditorBase implements vscode.Custom
                                         increment: current ? (1 / total) * 100 : 0
                                     });
                                 });
-                                const uris = Object.fromEntries(paths.map((v, i) => [
-                                    i.toString(),
-                                    webviewPanel.webview.asWebviewUri(vscode.Uri.file(v)).toString()
-                                ]));
+                                const uris: { [key: string]: string } = {};
+                                for (const [i, wavPath] of paths.entries()) {
+                                    if (!wavPath) { continue; }
+                                    uris[i.toString()] = webviewPanel.webview.asWebviewUri(vscode.Uri.file(wavPath)).toString();
+                                }
                                 return uris;
                             });
                         })();
